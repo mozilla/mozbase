@@ -39,7 +39,10 @@
 
 import BaseHTTPServer
 import SimpleHTTPServer
+import errno
+import logging
 import threading
+import socket
 import sys
 import os
 import urllib
@@ -48,6 +51,18 @@ from SocketServer import ThreadingMixIn
 
 class EasyServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     allow_reuse_address = True
+    acceptable_errors = (errno.EPIPE, errno.WSAECONNABORTED)
+
+    def handle_error(self, request, client_address):
+        error = sys.exc_value
+
+        if isinstance(error, socket.error) and\
+           isinstance(error.args, tuple) and\
+           error.args[0] in self.acceptable_errors:
+            pass  # remote hang up before the result is sent
+        else:
+            logging.error(error)
+
 
 class MozRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     docroot = os.getcwd() # current working directory at time of import
