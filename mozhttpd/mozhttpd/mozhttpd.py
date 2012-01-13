@@ -51,7 +51,7 @@ from SocketServer import ThreadingMixIn
 
 class EasyServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     allow_reuse_address = True
-    acceptable_errors = (errno.EPIPE, errno.WSAECONNABORTED)
+    acceptable_errors = (errno.EPIPE,) # errno.WSAECONNABORTED) see https://bugzilla.mozilla.org/show_bug.cgi?id=709349#c20
 
     def handle_error(self, request, client_address):
         error = sys.exc_value
