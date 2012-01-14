@@ -51,14 +51,16 @@ from SocketServer import ThreadingMixIn
 
 class EasyServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     allow_reuse_address = True
-    acceptable_errors = (errno.EPIPE,) # errno.WSAECONNABORTED) see https://bugzilla.mozilla.org/show_bug.cgi?id=709349#c20
+    acceptable_errors = (errno.EPIPE, errno.ECONNABORTED)
 
     def handle_error(self, request, client_address):
         error = sys.exc_value
 
-        if isinstance(error, socket.error) and\
-           isinstance(error.args, tuple) and\
-           error.args[0] in self.acceptable_errors:
+        if (isinstance(error, socket.error) and \
+           isinstance(error.args, tuple) and \
+           error.args[0] in self.acceptable_errors) or \
+           (isinstance(error, IOError) and \
+            error.errno in self.acceptable_errors):
             pass  # remote hang up before the result is sent
         else:
             logging.error(error)
