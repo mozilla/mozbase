@@ -250,7 +250,7 @@ class DeviceManager:
 
 
   @abstractmethod
-  def killProcess(self, appname):
+  def killProcess(self, appname, forceKill=False):
     """
     external function
     returns:

@@ -568,8 +568,10 @@ class DeviceManagerSUT(DeviceManager):
   # returns:
   #  success: output from testagent
   #  failure: None
-  def killProcess(self, appname):
+  def killProcess(self, appname, forceKill=False):
     try:
+      if forceKill:
+        print("Warning: killProcess(): forceKill parameter unsupported on SUT")
       data = self.verifySendCMD(['kill ' + appname])
     except(DMError):
       return None
