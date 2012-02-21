@@ -25,11 +25,17 @@ class DeviceManagerADB(DeviceManager):
         packageName = 'org.mozilla.fennec_'
     self.Init(packageName)
 
+  def __del__(self):
+    if (self.host != None):
+      self.disconnectRemoteADB()
+
   def Init(self, packageName):
     # Initialization code that may fail: Catch exceptions here to allow
     # successful initialization even if, for example, adb is not installed.
     try:
       self.verifyADB()
+      if (self.host != None):
+        self.connectRemoteADB()
       self.verifyRunAs(packageName)
     except:
       self.useRunAs = False
@@ -62,6 +68,12 @@ class DeviceManagerADB(DeviceManager):
           print "restarting as root failed, but run-as available"
         else:
           print "restarting as root failed"
+
+  def connectRemoteADB(self):
+    self.checkCmd(["connect", self.host + ":" + str(self.port)])
+
+  def disconnectRemoteADB(self):
+    self.checkCmd(["disconnect", self.host + ":" + str(self.port)])
 
   # external function
   # returns:
