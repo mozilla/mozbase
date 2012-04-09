@@ -49,6 +49,7 @@ import os
 import urllib
 import urlparse
 import re
+import iface
 from SocketServer import ThreadingMixIn
 
 class EasyServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
@@ -257,27 +258,35 @@ class MozHttpd(object):
 
 
 def main(args=sys.argv[1:]):
-    
+
     # parse command line options
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option('-p', '--port', dest='port', 
+    parser.add_option('-p', '--port', dest='port',
                       type="int", default=8888,
                       help="port to run the server on [DEFAULT: %default]")
     parser.add_option('-H', '--host', dest='host',
                       default='127.0.0.1',
                       help="host [DEFAULT: %default]")
+    parser.add_option('-i', '--external-ip', action="store_true",
+                      dest='external_ip', default=False,
+                      help="find and use external ip for host")
     parser.add_option('-d', '--docroot', dest='docroot',
                       default=os.getcwd(),
                       help="directory to serve files from [DEFAULT: %default]")
     options, args = parser.parse_args(args)
     if args:
+        parser.error("mozhttpd does not take any arguments")
         parser.print_help()
         parser.exit()
 
+    if options.external_ip:
+        host = iface.get_lan_ip()
+    else:
+        host = options.host
+
     # create the server
-    kwargs = options.__dict__.copy()
-    server = MozHttpd(**kwargs)
+    server = MozHttpd(host=host, port=options.port, docroot=options.docroot)
 
     print "Serving '%s' at %s:%s" % (server.docroot, server.host, server.port)
     server.start(block=True)
