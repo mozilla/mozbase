@@ -53,6 +53,9 @@ from utils import findInPath
 from mozprofile import *
 from mozprocess.processhandler import ProcessHandler
 
+if mozinfo.isMac:
+    from plistlib import readPlist
+
 package_metadata = get_metadata_from_egg('mozrunner')
 
 class Runner(object):
@@ -80,6 +83,12 @@ class Runner(object):
             raise Exception("Binary not specified")
         if not os.path.exists(self.binary):
             raise OSError("Binary path does not exist: %s" % self.binary)
+
+        # allow Mac binaries to be specified as an app bundle
+        if mozinfo.isMac and os.path.splitext(self.binary)[1] == '.app':
+            info = readPlist("%s/Contents/Info.plist" % self.binary)
+            self.binary = os.path.join(self.binary, "Contents/MacOS/%s" % 
+                                       info['CFBundleExecutable'])
 
         self.cmdargs = cmdargs or []
         _cmdargs = [i for i in self.cmdargs
