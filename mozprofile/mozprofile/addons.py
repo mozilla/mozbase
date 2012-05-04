@@ -25,6 +25,15 @@ class AddonManager(object):
         """
         self.profile = profile
         self.installed_addons = []
+        self.installed_manifests = []
+
+    @property
+    def addons(self):
+        return self.installed_addons
+
+    @property
+    def manifests(self):
+        return self.installed_manifest
 
     def install_addons(self, addons=None, manifests=None):
         """
@@ -44,6 +53,7 @@ class AddonManager(object):
                 manifests = [manifests]
             for manifest in manifests:
                 self.install_from_manifest(manifest)
+            self.installed_manifest = manifests
 
 
     def install_from_manifest(self, filepath):
