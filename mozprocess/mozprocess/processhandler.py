@@ -108,12 +108,31 @@ class ProcessHandlerMixin(object):
                 if not self._ignore_children:
                     try:
                         os.killpg(self.pid, signal.SIGKILL)
+
+                        # If we don't call os.wait() we end up with zombie processes
+                        # see bug 658509, but it seems to traceback on linux
+                        if mozinfo.isMac:
+                            try:
+                                os.wait()
+                            except OSError, e:
+                                # If the process doesn't exist anymore we can
+                                # ignore this exception silently
+                                pass
+
                     except BaseException, e:
                         if getattr(e, "errno", None) != 3:
                             # Error 3 is "no such process", which is ok
                             print >> sys.stderr, "Could not kill process, could not find pid: %s" % self.pid
                 else:
                     os.kill(self.pid, signal.SIGKILL)
+
+                    # See above why we have to special case OS X
+                    if mozinfo.isMac:
+                        try:
+                            os.wait()
+                        except OSError, e:
+                            pass
+
                 if self.returncode is None:
                     self.returncode = subprocess.Popen._internal_poll(self)
 
