@@ -369,15 +369,23 @@ class CLI(MozProfileCLI):
         self.start(runner)
         runner.cleanup()
 
+    def debugger_arguments(self):
+        """
+        returns a 2-tuple of debugger arguments:
+        (debugger_arguments, interactive)
+        """
+        debug_args = self.options.debugger_args
+        interactive = self.options.interactive
+        if self.options.debugger:
+            debug_args, interactive = debugger_arguments(self.options.debugger)
+        return debug_args, interactive
+
     def start(self, runner):
         """Starts the runner and waits for Firefox to exit or Keyboard Interrupt.
         Shoule be overwritten to provide custom running of the runner instance."""
 
         # attach a debugger if specified
-        debug_args = self.options.debugger_args
-        interactive = self.options.interactive
-        if self.options.debugger:
-            debug_args, interactive = debugger_arguments(self.options.debugger)
+        debug_args, interactive = self.debugger_arguments()
         runner.start(debug_args=debug_args, interactive=interactive)
         print 'Starting:', ' '.join(runner.command)
         try:
