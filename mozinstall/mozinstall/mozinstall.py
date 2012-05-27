@@ -7,6 +7,7 @@
 import mozinfo
 from optparse import OptionParser
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -199,15 +200,14 @@ def _install_dmg(src, dest):
                 appName = appFile
                 break
 
+        mounted_path = os.path.join(appDir, appName)
+
         dest = os.path.join(dest, appName)
         assert not os.path.isfile(dest)
 
-        if not os.path.isdir(dest):
-            os.makedirs(dest)
-
-        entries = os.path.join(appDir, appName, '*')
-        subprocess.check_call('cp -r %s %s' % (entries, dest),
-                              shell=True)
+        # copytree() would fail if dest already exists.
+        shutil.rmtree(dest, ignore_errors=True)
+        shutil.copytree(mounted_path, dest, False)
 
     finally:
         subprocess.call('hdiutil detach %s -quiet' % appDir,
@@ -220,8 +220,12 @@ def _install_exe(src, dest):
     # possibly gets around UAC in vista (still need to run as administrator)
 
     os.environ['__compat_layer'] = 'RunAsInvoker'
-    cmd = [src, '/S', '/D=%s' % os.path.realpath(dest)]
-    subprocess.check_call(cmd)
+    cmd = [src, '/I', '/D=%s' % os.path.realpath(dest)]
+
+    # As long as we support Python 2.4 check_call will not be available.
+    result = subprocess.call(cmd)
+    if not result is 0:
+        raise Exception('Execution of installer failed.')
 
     return dest
 
