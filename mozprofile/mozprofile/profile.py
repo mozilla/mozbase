@@ -170,6 +170,9 @@ class Profile(object):
     def clean_preferences(self):
         """Removed preferences added by mozrunner."""
         for filename in self.written_prefs:
+            if not os.path.exists(os.path.join(self.profile, filename)):
+                # file has been deleted
+                break
             while True:
                 if not self.pop_preferences(filename):
                     break
@@ -181,6 +184,7 @@ class Profile(object):
             process has not yet relinquished handles on files, so we do a wait/try
             construct and timeout if we can't get a clear road to deletion
         """
+
         try:
             from exceptions import WindowsError
             from time import sleep
@@ -201,7 +205,6 @@ class Profile(object):
         except ImportError:
             # We can't re-raise an error, so we'll hope the stuff above us will throw
             pass
-
 
     def cleanup(self):
         """Cleanup operations for the profile."""

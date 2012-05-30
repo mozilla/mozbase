@@ -24,8 +24,14 @@ class AddonManager(object):
         profile - the path to the profile for which we install addons
         """
         self.profile = profile
+
+        # information needed for profile reset:
+        # https://github.com/mozilla/mozbase/blob/270a857328b130860d1b1b512e23899557a3c8f7/mozprofile/mozprofile/profile.py#L93
         self.installed_addons = []
         self.installed_manifests = []
+
+        # addons that we've installed; needed for cleanup
+        self._addon_dirs = []
 
     def install_addons(self, addons=None, manifests=None):
         """
@@ -203,6 +209,7 @@ class AddonManager(object):
                 shutil.copy(xpifile, addon_path + '.xpi')
             else:
                 dir_util.copy_tree(addon, addon_path, preserve_symlinks=1)
+                self._addon_dirs.append(addon_path)
 
             # remove the temporary directory, if any
             if tmpdir:
@@ -214,6 +221,6 @@ class AddonManager(object):
 
     def clean_addons(self):
         """Cleans up addons in the profile."""
-        for addon in self.installed_addons:
+        for addon in self._addon_dirs:
             if os.path.isdir(addon):
                 dir_util.remove_tree(addon)
