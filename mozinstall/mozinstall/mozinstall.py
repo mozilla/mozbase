@@ -4,6 +4,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+"""Module to handle the installation and uninstallation of Gecko based
+applications across platforms.
+
+"""
 import mozinfo
 from optparse import OptionParser
 import os
@@ -26,42 +30,82 @@ TIMEOUT_UNINSTALL = 60
 
 
 class InstallError(Exception):
-    """
-    Thrown when the installation fails. Includes traceback
-    if available.
-    """
+    """Thrown when installation fails. Includes traceback if available."""
 
 
 class InvalidBinary(Exception):
-    """
-    Thrown when the binary cannot be found after the installation.
-    """
+    """Thrown when the binary cannot be found after the installation."""
 
 
 class InvalidSource(Exception):
-    """
-    Thrown when the specified source is not a recognized
-    file type (zip, exe, tar.gz, tar.bz2 or dmg)
+    """Thrown when the specified source is not a recognized file type.
+
+    Supported types:
+    Linux:   tar.gz, tar.bz2
+    Mac:     dmg
+    Windows: zip, exe
+
     """
 
 
 class UninstallError(Exception):
+    """Thrown when uninstallation fails. Includes traceback if available."""
+
+
+def get_binary(path, apps=DEFAULT_APPS):
+    """Find the binary in the specified path, and return its path. If binary is
+    not found throw an InvalidBinary exception.
+
+    Arguments:
+    path -- the path within to search for the binary
+
+    Keyword arguments:
+    apps -- list of binaries without file extension to look for
+
     """
-    Thrown when the uninstallation fails. Includes traceback
-    if available.
-    """
+    binary = None
+
+    # On OS X we can get the real binary from the app bundle
+    if mozinfo.isMac:
+        plist = '%s/Contents/Info.plist' % path
+        assert os.path.isfile(plist), '"%s" has not been found.' % plist
+
+        binary = os.path.join(path, 'Contents/MacOS/',
+                              readPlist(plist)['CFBundleExecutable'])
+
+    else:
+        if mozinfo.isWin:
+            apps = [app + '.exe' for app in apps]
+
+        for root, dirs, files in os.walk(path):
+            for filename in files:
+                # os.access evaluates to False for some reason, so not using it
+                if filename in apps:
+                    binary = os.path.realpath(os.path.join(root, filename))
+                    break
+
+    if not binary:
+        # The expected binary has not been found. Make sure we clean the
+        # install folder to remove any traces
+        shutils.rmtree(path)
+
+        raise InvalidBinary('"%s" does not contain a valid binary.' % path)
+
+    return binary
 
 
 def install(src, dest=None, apps=DEFAULT_APPS):
-    """
-    Installs a zip, exe, tar.gz, tar.bz2 or dmg file
+    """Install a zip, exe, tar.gz, tar.bz2 or dmg file, and return the path of
+    the binary. If binary is not found throw an InstallError exception.
 
-    src - the path to the install file
-    dest - the path to install to [default is os.path.dirname(src)]
-    returns - the full path to the binary in the installed folder
-              or None if the binary cannot be found
-    """
+    Arguments:
+    src  -- the path to the install file
 
+    Keyword arguments:
+    dest -- the path to install to (default current folder)
+    apps -- list of binaries without file extension to look for
+
+    """
     src = os.path.realpath(src)
     if not is_installer(src):
         raise InvalidSource(src + ' is not a recognized file type ' +
@@ -75,6 +119,8 @@ def install(src, dest=None, apps=DEFAULT_APPS):
         if mozinfo.isWin and src.lower().endswith('.exe'):
             filename = os.path.splitext(os.path.basename(src))[0]
             dest = os.path.join(dest, filename)
+
+    assert not os.path.isfile(dest), 'dest cannot be a file'
 
     trbk = None
     try:
@@ -101,13 +147,17 @@ def install(src, dest=None, apps=DEFAULT_APPS):
 
 
 def is_installer(src):
-    """
-    Tests if the given file is a valid installer package (zip, exe, tar.gz,
-    tar.bz2 or dmg)
+    """Tests if the given file is a valid installer package.
 
-    src - the path to the install file
-    """
+    Supported types:
+    Linux:   tar.gz, tar.bz2
+    Mac:     dmg
+    Windows: zip, exe
 
+    Arguments:
+    src -- the path to the install file
+
+    """
     src = os.path.realpath(src)
     assert os.path.isfile(src), 'Installer has to be a file'
 
@@ -120,17 +170,17 @@ def is_installer(src):
 
 
 def uninstall(binary):
-    """
-    Uninstalls the specified binary. If it has been installed via the installer
-    on Windows it will make use of the uninstaller.
+    """Uninstalls the specified binary. If it has been installed via an
+    installer on Windows it will make use of the uninstaller first.
 
-    binary - the path to the binary
-    """
+    Arguments:
+    binary -- the path to the binary
 
+    """
     binary = os.path.realpath(binary)
     assert os.path.isfile(binary), 'binary "%s" has to be a file.' % binary
 
-    # We know that the binary is a file. So we can savely remove the parent
+    # We know that the binary is a file. So we can safely remove the parent
     # folder. On OS X we have to get the .app bundle.
     folder = os.path.dirname(binary)
     if mozinfo.isMac:
@@ -139,13 +189,13 @@ def uninstall(binary):
     # On Windows we have to use the uninstaller. If it's not available fallback
     # to the directory removal code
     if mozinfo.isWin:
-        uninstall_folder = "%s\uninstall" % folder
-        log_file = "%s\uninstall.log" % uninstall_folder
+        uninstall_folder = '%s\uninstall' % folder
+        log_file = '%s\uninstall.log' % uninstall_folder
 
         if os.path.isfile(log_file):
             trbk = None
             try:
-                cmdArgs = ["%s\uninstall\helper.exe" % folder, "/S"]
+                cmdArgs = ['%s\uninstall\helper.exe' % folder, '/S']
                 result = subprocess.call(cmdArgs)
                 if not result is 0:
                     raise Exception('Execution of uninstaller failed.')
@@ -158,7 +208,7 @@ def uninstall(binary):
                     time.sleep(1)
 
                     if time.time() > end_time:
-                        raise Exception('Failure in removing uninstall folder.')
+                        raise Exception('Failure removing uninstall folder.')
 
             except Exception, e:
                 cls, exc, trbk = sys.exc_info()
@@ -175,21 +225,16 @@ def uninstall(binary):
     shutil.rmtree(folder)
 
 
-def _extract(src, dest=None):
+def _extract(src, dest):
+    """Extract a tar or zip file into the destination folder and return the
+    application folder.
+
+    Arguments:
+    src -- archive which has to be extracted
+    dest -- the path to extract to
+
     """
-    Takes in a tar or zip file and extracts it to dest
-
-    src - archive which has to be extracted
-    dest - the path to extract to [default is os.path.dirname(src)]
-
-    Returns the application directory
-    """
-
-    assert not os.path.isfile(dest), "dest cannot be a file"
-
-    if dest is None:
-        dest = os.path.dirname(src)
-    elif not os.path.isdir(dest):
+    if not os.path.isdir(dest):
         os.makedirs(dest)
 
     if zipfile.is_zipfile(src):
@@ -240,16 +285,15 @@ def _extract(src, dest=None):
     return top_level_files
 
 
-def _install_dmg(src, dest):
+def _install_dmg(src, dest=None):
+    """Extract a dmg file into the destination folder and return the
+    application folder.
+
+    Arguments:
+    src -- DMG image which has to be extracted
+    dest -- the path to extract to
+
     """
-    Takes in a dmg file and extracts it to destination folder
-
-    src - dmg image of the application
-    dest - the path to extract to [default is os.path.dirname(src)]
-
-    Returns the application directory
-    """
-
     try:
         proc = subprocess.Popen('hdiutil attach %s' % src,
                                 shell=True,
@@ -282,18 +326,15 @@ def _install_dmg(src, dest):
 
 
 def _install_exe(src, dest):
+    """Run the MSI installer to silently install the application into the
+    destination folder. Return the folder path.
+
+    Arguments:
+    src -- MSI installer to be executed
+    dest -- the path to install to
+
     """
-    Takes in an exe file (installer) and silently installs the application
-    into the destination folder
-
-    src - exe installer of the application
-    dest - the path to install to [default is os.path.dirname(src)]
-
-    Returns the application directory
-    """
-
     # possibly gets around UAC in vista (still need to run as administrator)
-
     os.environ['__compat_layer'] = 'RunAsInvoker'
     cmd = [src, '/S', '/D=%s' % os.path.realpath(dest)]
 
@@ -303,46 +344,6 @@ def _install_exe(src, dest):
         raise Exception('Execution of installer failed.')
 
     return dest
-
-
-def get_binary(path, apps=DEFAULT_APPS):
-    """
-    Finds the binary in the specified path
-    path - the path within to search for the binary
-
-    Returns the full path to the binary in the folder or throws an
-    InvalidBinary exception if the binary cannot be found
-    """
-
-    binary = None
-
-    # On OS X we can get the real binary from the app bundle
-    if mozinfo.isMac:
-        plist = '%s/Contents/Info.plist' % path
-        assert os.path.isfile(plist), '"%s" has not been found.' % plist
-
-        binary = os.path.join(path, 'Contents/MacOS/',
-                              readPlist(plist)['CFBundleExecutable'])
-
-    else:
-        if mozinfo.isWin:
-            apps = [app + '.exe' for app in apps]
-
-        for root, dirs, files in os.walk(path):
-            for filename in files:
-                # os.access evaluates to False for some reason, so not using it
-                if filename in apps:
-                    binary = os.path.realpath(os.path.join(root, filename))
-                    break
-
-    if not binary:
-        # The expected binary has not been found. Make sure we clean the
-        # install folder to remove any traces
-        shutils.rmtree(path)
-
-        raise InvalidBinary('"%s" does not contain a valid binary.' % path)
-
-    return binary
 
 
 def cli(argv=sys.argv[1:]):
