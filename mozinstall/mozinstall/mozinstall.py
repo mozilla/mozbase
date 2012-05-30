@@ -11,15 +11,18 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import time
 import zipfile
 
 if mozinfo.isMac:
     from plistlib import readPlist
 
 
-_default_apps = ['firefox',
-                 'thunderbird',
-                 'fennec']
+DEFAULT_APPS = ['firefox',
+                'thunderbird',
+                'fennec']
+
+TIMEOUT_UNINSTALL = 60
 
 
 class InstallError(Exception):
@@ -42,12 +45,19 @@ class InvalidSource(Exception):
     """
 
 
-def install(src, dest=None, apps=_default_apps):
+class UninstallError(Exception):
+    """
+    Thrown when the uninstallation fails. Includes traceback
+    if available.
+    """
+
+
+def install(src, dest=None, apps=DEFAULT_APPS):
     """
     Installs a zip, exe, tar.gz, tar.bz2 or dmg file
+
     src - the path to the install file
     dest - the path to install to [default is os.path.dirname(src)]
-
     returns - the full path to the binary in the installed folder
               or None if the binary cannot be found
     """
@@ -78,8 +88,8 @@ def install(src, dest=None, apps=_default_apps):
 
     except Exception, e:
         cls, exc, trbk = sys.exc_info()
-        install_error = InstallError('Failed to install %s' % src)
-        raise install_error.__class__, install_error, trbk
+        error = InstallError('Failed to install %s' % src)
+        raise error.__class__, error, trbk
 
     finally:
         # trbk won't get GC'ed due to circular reference
@@ -109,14 +119,70 @@ def is_installer(src):
         return src.lower().endswith('.exe') or zipfile.is_zipfile(src)
 
 
-def _extract(src, dest=None, delete=False):
+def uninstall(binary):
+    """
+    Uninstalls the specified binary. If it has been installed via the installer
+    on Windows it will make use of the uninstaller.
+
+    binary - the path to the binary
+    """
+
+    binary = os.path.realpath(binary)
+    assert os.path.isfile(binary), 'binary "%s" has to be a file.' % binary
+
+    # We know that the binary is a file. So we can savely remove the parent
+    # folder. On OS X we have to get the .app bundle.
+    folder = os.path.dirname(binary)
+    if mozinfo.isMac:
+        folder = os.path.dirname(os.path.dirname(folder))
+
+    # On Windows we have to use the uninstaller. If it's not available fallback
+    # to the directory removal code
+    if mozinfo.isWin:
+        uninstall_folder = "%s\uninstall" % folder
+        log_file = "%s\uninstall.log" % uninstall_folder
+
+        if os.path.isfile(log_file):
+            trbk = None
+            try:
+                cmdArgs = ["%s\uninstall\helper.exe" % folder, "/S"]
+                result = subprocess.call(cmdArgs)
+                if not result is 0:
+                    raise Exception('Execution of uninstaller failed.')
+
+                # The uninstaller spawns another process so the subprocess call
+                # returns immediately. We have to wait until the uninstall
+                # folder has been removed or until we run into a timeout.
+                end_time = time.time() + TIMEOUT_UNINSTALL
+                while os.path.exists(uninstall_folder):
+                    time.sleep(1)
+
+                    if time.time() > end_time:
+                        raise Exception('Failure in removing uninstall folder.')
+
+            except Exception, e:
+                cls, exc, trbk = sys.exc_info()
+                error = UninstallError('Failed to uninstall %s' % binary)
+                raise error.__class__, error, trbk
+
+            finally:
+                # trbk won't get GC'ed due to circular reference
+                # http://docs.python.org/library/sys.html#sys.exc_info
+                del trbk
+
+    # Ensure that we remove any trace of the installation. Even the uninstaller
+    # on Windows leaves files behind we have to explicitely remove.
+    shutil.rmtree(folder)
+
+
+def _extract(src, dest=None):
     """
     Takes in a tar or zip file and extracts it to dest
 
-    If dest is not specified, extracts to os.path.dirname(src)
-    If delete is set to True, deletes the bundle at path
+    src - archive which has to be extracted
+    dest - the path to extract to [default is os.path.dirname(src)]
 
-    Returns the list of top level files that were extracted
+    Returns the application directory
     """
 
     assert not os.path.isfile(dest), "dest cannot be a file"
@@ -161,9 +227,6 @@ def _extract(src, dest=None, delete=False):
 
     bundle.close()
 
-    if delete:
-        os.remove(src)
-
     # namelist returns paths with forward slashes even in windows
     top_level_files = [os.path.join(dest, name) for name in namelist
                              if len(name.rstrip('/').split('/')) == 1]
@@ -180,9 +243,11 @@ def _extract(src, dest=None, delete=False):
 def _install_dmg(src, dest):
     """
     Takes in a dmg file and extracts it to destination folder
-    If dest is not specified, extracts to os.path.dirname(src)
 
-    Returns the list of top level files that were extracted
+    src - dmg image of the application
+    dest - the path to extract to [default is os.path.dirname(src)]
+
+    Returns the application directory
     """
 
     try:
@@ -217,6 +282,16 @@ def _install_dmg(src, dest):
 
 
 def _install_exe(src, dest):
+    """
+    Takes in an exe file (installer) and silently installs the application
+    into the destination folder
+
+    src - exe installer of the application
+    dest - the path to install to [default is os.path.dirname(src)]
+
+    Returns the application directory
+    """
+
     # possibly gets around UAC in vista (still need to run as administrator)
 
     os.environ['__compat_layer'] = 'RunAsInvoker'
@@ -230,13 +305,13 @@ def _install_exe(src, dest):
     return dest
 
 
-def get_binary(path, apps=_default_apps):
+def get_binary(path, apps=DEFAULT_APPS):
     """
     Finds the binary in the specified path
-    path - the path within which to search for the binary
+    path - the path within to search for the binary
 
-    returns - the full path to the binary in the folder
-              or None if the binary cannot be found
+    Returns the full path to the binary in the folder or throws an
+    InvalidBinary exception if the binary cannot be found
     """
 
     binary = None
@@ -261,9 +336,10 @@ def get_binary(path, apps=_default_apps):
                     break
 
     if not binary:
-        # TODO: It should never happen but if it's the case the installed
-        # files should be removed. It can be done once the uninstaller has
-        # been implemented by bug 757411. For now just throw an exception.
+        # The expected binary has not been found. Make sure we clean the
+        # install folder to remove any traces
+        shutils.rmtree(path)
+
         raise InvalidBinary('"%s" does not contain a valid binary.' % path)
 
     return binary
@@ -281,7 +357,7 @@ def cli(argv=sys.argv[1:]):
                       help='[optional] Directory to install application into')
     parser.add_option('--app', dest='app',
                       action='append',
-                      default=_default_apps,
+                      default=DEFAULT_APPS,
                       help='[optional] Application being installed. '
                            'Should be lowercase, e.g: '
                            'firefox, fennec, thunderbird, etc.')
