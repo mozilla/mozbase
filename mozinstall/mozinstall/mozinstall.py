@@ -87,7 +87,7 @@ def get_binary(path, apps=DEFAULT_APPS):
     if not binary:
         # The expected binary has not been found. Make sure we clean the
         # install folder to remove any traces
-        shutils.rmtree(path)
+        shutil.rmtree(path)
 
         raise InvalidBinary('"%s" does not contain a valid binary.' % path)
 
@@ -102,7 +102,7 @@ def install(src, dest=None, apps=DEFAULT_APPS):
     src  -- the path to the install file
 
     Keyword arguments:
-    dest -- the path to install to (default current folder)
+    dest -- the path to install to (default: sub folder in current working dir)
     apps -- list of binaries without file extension to look for
 
     """
@@ -112,15 +112,13 @@ def install(src, dest=None, apps=DEFAULT_APPS):
                                   '(zip, exe, tar.gz, tar.bz2 or dmg)')
 
     if not dest:
-        dest = os.path.dirname(src)
+        dest = os.getcwd()
 
         # On Windows the installer doesn't create a sub folder in the
-        # destination folder and would clutter the source folder
+        # destination folder and would clutter the current working dir
         if mozinfo.isWin and src.lower().endswith('.exe'):
-            filename = os.path.splitext(os.path.basename(src))[0]
+            filename = os.path.basename(src).split('.')[0]
             dest = os.path.join(dest, filename)
-
-    assert not os.path.isfile(dest), 'dest cannot be a file'
 
     trbk = None
     try:
@@ -134,8 +132,8 @@ def install(src, dest=None, apps=DEFAULT_APPS):
 
     except Exception, e:
         cls, exc, trbk = sys.exc_info()
-        error = InstallError('Failed to install %s' % src)
-        raise error.__class__, error, trbk
+        error = InstallError('Failed to install "%s"' % src)
+        raise InstallError, error, trbk
 
     finally:
         # trbk won't get GC'ed due to circular reference
@@ -213,7 +211,7 @@ def uninstall(binary):
             except Exception, e:
                 cls, exc, trbk = sys.exc_info()
                 error = UninstallError('Failed to uninstall %s' % binary)
-                raise error.__class__, error, trbk
+                raise UninstallError, error, trbk
 
             finally:
                 # trbk won't get GC'ed due to circular reference
@@ -234,7 +232,8 @@ def _extract(src, dest):
     dest -- the path to extract to
 
     """
-    if not os.path.isdir(dest):
+
+    if not os.path.exists(dest):
         os.makedirs(dest)
 
     if zipfile.is_zipfile(src):
@@ -312,10 +311,11 @@ def _install_dmg(src, dest=None):
         mounted_path = os.path.join(appDir, appName)
 
         dest = os.path.join(dest, appName)
-        assert not os.path.isfile(dest)
 
         # copytree() would fail if dest already exists.
-        shutil.rmtree(dest, ignore_errors=True)
+        if os.path.exists(dest):
+            raise InstallError('App bundle "%s" already exists.' % dest)
+
         shutil.copytree(mounted_path, dest, False)
 
     finally:
@@ -334,6 +334,9 @@ def _install_exe(src, dest):
     dest -- the path to install to
 
     """
+    if os.path.exists(dest):
+        raise InstallError('Installation directory "%s" already exists' % dest)
+
     # possibly gets around UAC in vista (still need to run as administrator)
     os.environ['__compat_layer'] = 'RunAsInvoker'
     cmd = [src, '/S', '/D=%s' % os.path.realpath(dest)]
