@@ -94,31 +94,30 @@ def get_binary(path, apps=DEFAULT_APPS):
     return binary
 
 
-def install(src, dest=None, apps=DEFAULT_APPS):
+def install(src, dest, apps=DEFAULT_APPS):
     """Install a zip, exe, tar.gz, tar.bz2 or dmg file, and return the path of
     the binary. If binary is not found throw an InstallError exception.
 
     Arguments:
     src  -- the path to the install file
+    dest -- the path to install to (to ensure we do not overwrite any existent
+                                    files the folder should not exist yet)
 
     Keyword arguments:
-    dest -- the path to install to (default: sub folder in current working dir)
     apps -- list of binaries without file extension to look for
 
     """
     src = os.path.realpath(src)
+    dest = os.path.realpath(dest)
+
     if not is_installer(src):
         raise InvalidSource(src + ' is not a recognized file type ' +
                                   '(zip, exe, tar.gz, tar.bz2 or dmg)')
 
-    if not dest:
-        dest = os.getcwd()
+    if os.path.exists(dest):
+        raise InstallError('Destination folder "%s" should not exist.' % dest)
 
-        # On Windows the installer doesn't create a sub folder in the
-        # destination folder and would clutter the current working dir
-        if mozinfo.isWin and src.lower().endswith('.exe'):
-            filename = os.path.basename(src).split('.')[0]
-            dest = os.path.join(dest, filename)
+    os.makedirs(dest)
 
     trbk = None
     try:
@@ -232,10 +231,6 @@ def _extract(src, dest):
     dest -- the path to extract to
 
     """
-
-    if not os.path.exists(dest):
-        os.makedirs(dest)
-
     if zipfile.is_zipfile(src):
         bundle = zipfile.ZipFile(src)
         namelist = bundle.namelist()
@@ -284,7 +279,7 @@ def _extract(src, dest):
     return top_level_files
 
 
-def _install_dmg(src, dest=None):
+def _install_dmg(src, dest):
     """Extract a dmg file into the destination folder and return the
     application folder.
 
@@ -334,9 +329,6 @@ def _install_exe(src, dest):
     dest -- the path to install to
 
     """
-    if os.path.exists(dest):
-        raise InstallError('Installation directory "%s" already exists' % dest)
-
     # possibly gets around UAC in vista (still need to run as administrator)
     os.environ['__compat_layer'] = 'RunAsInvoker'
     cmd = [src, '/S', '/D=%s' % os.path.realpath(dest)]
