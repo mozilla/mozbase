@@ -22,10 +22,6 @@ if mozinfo.isMac:
     from plistlib import readPlist
 
 
-DEFAULT_APPS = ['firefox',
-                'thunderbird',
-                'fennec']
-
 TIMEOUT_UNINSTALL = 60
 
 
@@ -52,15 +48,13 @@ class UninstallError(Exception):
     """Thrown when uninstallation fails. Includes traceback if available."""
 
 
-def get_binary(path, apps=DEFAULT_APPS):
+def get_binary(path, app_name):
     """Find the binary in the specified path, and return its path. If binary is
     not found throw an InvalidBinary exception.
 
     Arguments:
     path -- the path within to search for the binary
-
-    Keyword arguments:
-    apps -- list of binaries without file extension to look for
+    app_name -- application binary without file extension to look for
 
     """
     binary = None
@@ -74,13 +68,15 @@ def get_binary(path, apps=DEFAULT_APPS):
                               readPlist(plist)['CFBundleExecutable'])
 
     else:
+        app_name = app_name.lower()
+
         if mozinfo.isWin:
-            apps = [app + '.exe' for app in apps]
+            app_name = app_name + '.exe'
 
         for root, dirs, files in os.walk(path):
             for filename in files:
                 # os.access evaluates to False for some reason, so not using it
-                if filename in apps:
+                if filename.lower() == app_name:
                     binary = os.path.realpath(os.path.join(root, filename))
                     break
 
@@ -94,17 +90,14 @@ def get_binary(path, apps=DEFAULT_APPS):
     return binary
 
 
-def install(src, dest, apps=DEFAULT_APPS):
+def install(src, dest):
     """Install a zip, exe, tar.gz, tar.bz2 or dmg file, and return the path of
-    the binary. If binary is not found throw an InstallError exception.
+    the installation folder.
 
     Arguments:
     src  -- the path to the install file
     dest -- the path to install to (to ensure we do not overwrite any existent
                                     files the folder should not exist yet)
-
-    Keyword arguments:
-    apps -- list of binaries without file extension to look for
 
     """
     src = os.path.realpath(src)
@@ -114,10 +107,8 @@ def install(src, dest, apps=DEFAULT_APPS):
         raise InvalidSource(src + ' is not a recognized file type ' +
                                   '(zip, exe, tar.gz, tar.bz2 or dmg)')
 
-    if os.path.exists(dest):
-        raise InstallError('Destination folder "%s" should not exist.' % dest)
-
-    os.makedirs(dest)
+    if not os.path.exists(dest):
+        os.makedirs(dest)
 
     trbk = None
     try:
@@ -129,6 +120,8 @@ def install(src, dest, apps=DEFAULT_APPS):
         elif src.lower().endswith('.exe'):
             install_dir = _install_exe(src, dest)
 
+        return install_dir
+
     except Exception, e:
         cls, exc, trbk = sys.exc_info()
         error = InstallError('Failed to install "%s"' % src)
@@ -138,9 +131,6 @@ def install(src, dest, apps=DEFAULT_APPS):
         # trbk won't get GC'ed due to circular reference
         # http://docs.python.org/library/sys.html#sys.exc_info
         del trbk
-
-    if install_dir:
-        return get_binary(install_dir, apps=apps)
 
 
 def is_installer(src):
@@ -166,33 +156,28 @@ def is_installer(src):
         return src.lower().endswith('.exe') or zipfile.is_zipfile(src)
 
 
-def uninstall(binary):
-    """Uninstalls the specified binary. If it has been installed via an
-    installer on Windows it will make use of the uninstaller first.
+def uninstall(install_folder):
+    """Uninstalls the application in the specified path. If it has been
+    installed via an installer on Windows, use the uninstaller first.
 
     Arguments:
-    binary -- the path to the binary
+    install_folder -- the path of the installation folder
 
     """
-    binary = os.path.realpath(binary)
-    assert os.path.isfile(binary), 'binary "%s" has to be a file.' % binary
-
-    # We know that the binary is a file. So we can safely remove the parent
-    # folder. On OS X we have to get the .app bundle.
-    folder = os.path.dirname(binary)
-    if mozinfo.isMac:
-        folder = os.path.dirname(os.path.dirname(folder))
+    install_folder = os.path.realpath(install_folder)
+    assert os.path.isdir(install_folder), \
+        'installation folder "%s" exists.' % install_folder
 
     # On Windows we have to use the uninstaller. If it's not available fallback
     # to the directory removal code
     if mozinfo.isWin:
-        uninstall_folder = '%s\uninstall' % folder
+        uninstall_folder = '%s\uninstall' % install_folder
         log_file = '%s\uninstall.log' % uninstall_folder
 
         if os.path.isfile(log_file):
             trbk = None
             try:
-                cmdArgs = ['%s\uninstall\helper.exe' % folder, '/S']
+                cmdArgs = ['%s\uninstall\helper.exe' % install_folder, '/S']
                 result = subprocess.call(cmdArgs)
                 if not result is 0:
                     raise Exception('Execution of uninstaller failed.')
@@ -209,7 +194,7 @@ def uninstall(binary):
 
             except Exception, e:
                 cls, exc, trbk = sys.exc_info()
-                error = UninstallError('Failed to uninstall %s' % binary)
+                error = UninstallError('Failed to uninstall %s' % install_folder)
                 raise UninstallError, error, trbk
 
             finally:
@@ -219,7 +204,7 @@ def uninstall(binary):
 
     # Ensure that we remove any trace of the installation. Even the uninstaller
     # on Windows leaves files behind we have to explicitely remove.
-    shutil.rmtree(folder)
+    shutil.rmtree(install_folder)
 
 
 def _extract(src, dest):
@@ -329,6 +314,11 @@ def _install_exe(src, dest):
     dest -- the path to install to
 
     """
+    # The installer doesn't automatically create a sub folder. Lets guess the
+    # best name from the src file name
+    filename = os.path.basename(src)
+    dest = os.path.join(dest, filename.split('.')[0])
+
     # possibly gets around UAC in vista (still need to run as administrator)
     os.environ['__compat_layer'] = 'RunAsInvoker'
     cmd = [src, '/S', '/D=%s' % os.path.realpath(dest)]
