@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -331,35 +329,40 @@ def _install_exe(src, dest):
     return dest
 
 
-def cli(argv=sys.argv[1:]):
-    parser = OptionParser()
-    parser.add_option('-s', '--source',
-                      dest='src',
-                      help='Path to installation file. '
-                           'Accepts: zip, exe, tar.bz2, tar.gz, and dmg')
+def install_cli(argv=sys.argv[1:]):
+    parser = OptionParser(usage="usage: %prog [options] installer")
     parser.add_option('-d', '--destination',
                       dest='dest',
-                      default=None,
-                      help='[optional] Directory to install application into')
+                      default=os.getcwd(),
+                      help='Directory to install application into. '
+                           '[default: "%default"]')
     parser.add_option('--app', dest='app',
-                      action='append',
-                      default=DEFAULT_APPS,
-                      help='[optional] Application being installed. '
-                           'Should be lowercase, e.g: '
-                           'firefox, fennec, thunderbird, etc.')
+                      default='firefox',
+                      help='Application being installed. [default: %default]')
 
     (options, args) = parser.parse_args(argv)
-    if not options.src or not os.path.exists(options.src):
-        parser.error('Error: A valid source has to be specified.')
+    if not len(args) == 1:
+        parser.error('An installer file has to be specified.')
+
+    src = args[0]
 
     # Run it
-    if os.path.isdir(options.src):
-        binary = get_binary(options.src, apps=options.app)
+    if os.path.isdir(src):
+        binary = get_binary(src, app_name=options.app)
     else:
-        binary = install(options.src, dest=options.dest, apps=options.app)
+        install_path = install(src, options.dest)
+        binary = get_binary(install_path, app_name=options.app)
 
     print binary
 
 
-if __name__ == '__main__':
-    sys.exit(cli())
+def uninstall_cli(argv=sys.argv[1:]):
+    parser = OptionParser(usage="usage: %prog install_path")
+
+    (options, args) = parser.parse_args(argv)
+    if not len(args) == 1:
+        parser.error('An installation path has to be specified.')
+
+    # Run it
+    uninstall(argv[0])
+
