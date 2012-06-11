@@ -6,7 +6,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-version = '0.3.2'
+version = '0.4'
 
 # we only support python 2 right now
 assert sys.version_info[0] == 2
@@ -32,14 +32,21 @@ except (OSError, IOError):
 
 setup(name='mozprofile',
       version=version,
-      description="handling of Mozilla XUL app profiles",
+      description="Handling of Mozilla Gecko based application profiles",
       long_description=description,
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-      keywords='',
-      author='Mozilla Automation + Testing Team',
-      author_email='mozmill-dev@googlegroups.com',
-      url='http://github.com/mozautomation/mozmill',
-      license='MPL',
+      classifiers=['Environment :: Console',
+                   'Intended Audience :: Developers',
+                   'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
+                   'Natural Language :: English',
+                   'Operating System :: OS Independent',
+                   'Programming Language :: Python',
+                   'Topic :: Software Development :: Libraries :: Python Modules',
+                   ],
+      keywords='mozilla',
+      author='Mozilla Automation and Tools team',
+      author_email='tools@lists.mozilla.com',
+      url='https://github.com/mozilla/mozbase/tree/master/mozprocess',
+      license='MPL 2.0',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
       zip_safe=False,
@@ -49,4 +56,4 @@ setup(name='mozprofile',
       [console_scripts]
       mozprofile = mozprofile:cli
       """,
-      )
+    )

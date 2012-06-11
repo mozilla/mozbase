@@ -7,7 +7,7 @@ import sys
 from setuptools import setup, find_packages
 
 PACKAGE_NAME = "mozrunner"
-PACKAGE_VERSION = "5.5"
+PACKAGE_VERSION = "5.6"
 
 desc = """Reliable start/stop/configuration of Mozilla Applications (Firefox, Thunderbird, etc.)"""
 # take description from README
@@ -17,9 +17,9 @@ try:
 except (OSError, IOError):
     description = ''
 
-deps = ['mozinfo',
-        'mozprocess',
-        'mozprofile >= 0.3.2',
+deps = ['mozinfo == 0.3.3',
+        'mozprocess == 0.2',
+        'mozprofile == 0.4',
        ]
 
 # we only support python 2 right now
@@ -29,23 +29,25 @@ setup(name=PACKAGE_NAME,
       version=PACKAGE_VERSION,
       description=desc,
       long_description=description,
-      author='Mikeal Rogers, Mozilla',
-      author_email='mikeal.rogers@gmail.com',
-      url='http://github.com/mozautomation/mozmill',
-      license='MPL 1.1/GPL 2.0/LGPL 2.1',
+      classifiers=['Environment :: Console',
+                   'Intended Audience :: Developers',
+                   'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
+                   'Natural Language :: English',
+                   'Operating System :: OS Independent',
+                   'Programming Language :: Python',
+                   'Topic :: Software Development :: Libraries :: Python Modules',
+                   ],
+      keywords='mozilla',
+      author='Mozilla Automation and Tools team',
+      author_email='tools@lists.mozilla.com',
+      url='https://github.com/mozilla/mozbase/tree/master/mozrunner',
+      license='MPL 2.0',
       packages=find_packages(exclude=['legacy']),
       zip_safe=False,
-      entry_points="""
-          [console_scripts]
-          mozrunner = mozrunner:cli
-        """,
-      platforms =['Any'],
       install_requires = deps,
-      classifiers=['Development Status :: 4 - Beta',
-                   'Environment :: Console',
-                   'Intended Audience :: Developers',
-                   'License :: OSI Approved :: Mozilla Public License 1.1 (MPL 1.1)',
-                   'Operating System :: OS Independent',
-                   'Topic :: Software Development :: Libraries :: Python Modules',
-                  ]
-     )
+      entry_points="""
+      # -*- Entry points: -*-
+      [console_scripts]
+      mozrunner = mozrunner:cli
+      """,
+    )
