@@ -144,7 +144,9 @@ def is_installer(src):
 
     """
     src = os.path.realpath(src)
-    assert os.path.isfile(src), 'Installer has to be a file'
+
+    if not os.path.isfile(src):
+        return False
 
     if mozinfo.isLinux:
         return tarfile.is_tarfile(src)
