@@ -161,7 +161,8 @@ def main(args=sys.argv[1:]):
                 dependent_versions.setdefault(name, []).append(dep_info)
 
     if missing:
-        missing = dict([(i,  [format_version(**k) for k in j])
+        missing = dict([('%s %s' % (i, i)
+                         [format_version(**k) for k in j])
                         for i, j in dependent_versions.items()
                         if i in missing])
         parser.error("Bumping %s, but you also need to bump %s" % (versions,
