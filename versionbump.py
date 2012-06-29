@@ -161,8 +161,7 @@ def main(args=sys.argv[1:]):
                 dependent_versions.setdefault(name, []).append(dep_info)
 
     if missing:
-        import pdb; pdb.set_trace()
-        missing = dict([('%s %s' % (i, i),
+        missing = dict([('%s %s' % (i, info[directories[i]]['Version']),
                          [format_version(**k) for k in j])
                         for i, j in dependent_versions.items()
                         if i in missing])
