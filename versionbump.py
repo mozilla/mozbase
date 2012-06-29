@@ -251,7 +251,7 @@ def main(args=sys.argv[1:]):
                                    stderr=subprocess.PIPE,
                                    cwd=here)
         stdout, stderr = process.communicate()
-        if not process.returncode:
+        if process.returncode:
             print 'stdout:'
             print stdout
             print 'stderr:'
