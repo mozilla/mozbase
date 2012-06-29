@@ -114,8 +114,8 @@ def main(args=sys.argv[1:]):
                                                            process.returncode))
     branch = [line for line in stdout.splitlines() if line.startswith('*')][0]
     branch = branch.split('*', 1)[-1].strip()
-#    if branch != 'master':
-#        parser.error("versionbump.py must be used on the master branch")
+    if branch != 'master':
+        parser.error("versionbump.py must be used on the master branch")
     # - ensure there are no changes
     cmd = [options.git_path, 'status', '-s']
     process = subprocess.Popen(cmd,
@@ -170,8 +170,8 @@ def main(args=sys.argv[1:]):
 
     # ensure you are up to date
     print "Pulling from %s master" % REPOSITORY_URL
-#    call([options.git_path, 'pull', REPOSITORY_URL, 'master'],
-#         stdout=None, stderr=None, cwd=here)
+    call([options.git_path, 'pull', REPOSITORY_URL, 'master'],
+         stdout=None, stderr=None, cwd=here)
 
     # bump versions of desired files
     for name, newversion in versions.items():
