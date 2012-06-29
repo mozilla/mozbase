@@ -14,6 +14,7 @@ import setup_development
 here = setup_development.here
 REPOSITORY_URL = 'https://github.com/mozilla/mozbase.git'
 
+
 class CalledProcessError(Exception):
     """error for bad calls"""
 
