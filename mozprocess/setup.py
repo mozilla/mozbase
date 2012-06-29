@@ -5,7 +5,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '0.2'
+PACKAGE_VERSION = '0.2'
 
 # take description from README
 here = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +15,7 @@ except (OSError, IOError):
     description = ''
 
 setup(name='mozprocess',
-      version=version,
+      version=PACKAGE_VERSION,
       description="Mozilla-authored process handling",
       long_description=description,
       classifiers=['Environment :: Console',
