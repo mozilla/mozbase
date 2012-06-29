@@ -252,6 +252,10 @@ def main(args=sys.argv[1:]):
                                    cwd=here)
         stdout, stderr = process.communicate()
         if not process.returncode:
+            print 'stdout:'
+            print stdout
+            print 'stderr:'
+            print stderr
             parser.error("Error running `%s diff`" % options.git_path)
         f.write(stdout)
         if options.diff != '-':
