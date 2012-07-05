@@ -393,7 +393,7 @@ class ManifestParser(object):
         self.tests = []
         self.strict = strict
         self.rootdir = None
-        self.relativeRoot = None
+
         if manifests:
             self.read(*manifests)
 
@@ -416,9 +416,9 @@ class ManifestParser(object):
             here = os.path.dirname(os.path.abspath(filename))
             defaults['here'] = here
 
-            if self.rootdir is None:
-                # set the root directory
-                # == the directory of the first manifest given
+            # Update the root directory for each root manifest (where the function
+            # callee is not read itself)
+            if self.read.__name__ is not sys._getframe(1).f_code.co_name:
                 self.rootdir = here
 
             # read the configuration
@@ -451,11 +451,18 @@ class ManifestParser(object):
 
                 # determine the path
                 path = test.get('path', section)
-                if '://' not in path: # don't futz with URLs
+                if '://' not in path:
+                    # don't futz with URLs
                     path = normalize_path(path)
                     if not os.path.isabs(path):
                         path = os.path.join(here, path)
+                    relpath = os.path.relpath(path, self.rootdir)
+                else:
+                    # For URLs we can't create a relative path
+                    relpath = path
+
                 test['path'] = path
+                test['relpath'] = relpath
 
                 # append the item
                 self.tests.append(test)
