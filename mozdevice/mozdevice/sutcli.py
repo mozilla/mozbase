@@ -6,11 +6,13 @@
 Command-line client to control a device with the SUTAgent software installed
 """
 
-from mozdevice import droid
+import os
+import posixpath
+import StringIO
 import sys
 from optparse import OptionParser
-import os
-import StringIO
+
+from mozdevice import droid
 
 class SUTCli(object):
 
@@ -54,8 +56,25 @@ class SUTCli(object):
                                     'max_args': 0,
                                     'help_args': '',
                                     'help': 'get information on running processes on device'
+                                },
+                          'ls': { 'function': self.listfiles,
+                                  'min_args': 1,
+                                  'max_args': 1,
+                                  'help_args': '<remote>',
+                                  'help': 'list files on device'
+                                },
+                          'rm': { 'function': lambda file: self.dm.removeFile(file),
+                                    'min_args': 1,
+                                    'max_args': 1,
+                                    'help_args': '<remote>',
+                                    'help': 'remove file from device'
+                                },
+                          'rmdir': { 'function': lambda dir: self.dm.removeDir(dir),
+                                    'min_args': 1,
+                                    'max_args': 1,
+                                    'help_args': '<remote>',
+                                    'help': 'recursively remove directory from device'
                                 }
-
                           }
 
         for (commandname, command) in self.commands.iteritems():
@@ -102,12 +121,19 @@ class SUTCli(object):
                           default=20701)
 
     def push(self, src, dest):
-        self.dm.pushFile(src, dest)
+        if os.path.isdir(src):
+            self.dm.pushDir(src, dest)
+        else:
+            dest_is_dir = dest[-1] == '/' or self.dm.isDir(dest)
+            dest = posixpath.normpath(dest)
+            if dest_is_dir:
+                dest = posixpath.join(dest, os.path.basename(src))
+            self.dm.pushFile(src, dest)
 
     def install(self, apkfile):
         basename = os.path.basename(apkfile)
-        app_path_on_device = os.path.join(self.dm.getDeviceRoot(),
-                                          basename)
+        app_path_on_device = posixpath.join(self.dm.getDeviceRoot(),
+                                            basename)
         self.dm.pushFile(apkfile, app_path_on_device)
         self.dm.installApp(app_path_on_device)
 
@@ -143,6 +169,11 @@ class SUTCli(object):
         pslist = self.dm.getProcessList()
         for ps in pslist:
             print " ".join(ps)
+
+    def listfiles(self, dir):
+        filelist = self.dm.listFiles(dir)
+        for file in filelist:
+            print file
 
 def cli(args=sys.argv[1:]):
     # process the command line
