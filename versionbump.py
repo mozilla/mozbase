@@ -12,7 +12,7 @@ import sys
 import setup_development
 
 here = setup_development.here
-REPOSITORY_URL = 'https://github.com/mozilla/mozbase.git'
+REPOSITORY_URL = 'git@github.com:mozilla/mozbase.git'
 
 
 class CalledProcessError(Exception):
