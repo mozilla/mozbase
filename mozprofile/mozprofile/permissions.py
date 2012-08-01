@@ -128,9 +128,7 @@ class ServerLocations(object):
             if self.hasPrimary:
                 raise MultiplePrimaryLocationsError()
             self.hasPrimary = True
-        for loc in self._locations:
-            if loc.isEqual(location):
-                raise DuplicateLocationError(location.url())
+
         self._locations.append(location)
         if self.add_callback and not suppress_callback:
             self.add_callback([location])
@@ -256,7 +254,7 @@ class Permissions(object):
         permDB.commit()
         cursor.close()
 
-    def network_prefs(self, proxy=False):
+    def network_prefs(self, proxy=None):
         """
         take known locations and generate preferences to handle permissions and proxy
         returns a tuple of prefs, user_prefs
@@ -268,18 +266,18 @@ class Permissions(object):
         for (i, l) in itertools.izip(itertools.count(1), privileged):
             prefs.append(("capability.principal.codebase.p%s.granted" % i, "UniversalXPConnect"))
 
-            # TODO: do we need the port?
-            prefs.append(("capability.principal.codebase.p%s.id" % i, l.scheme + "://" + l.host))
+            prefs.append(("capability.principal.codebase.p%s.id" % i, "%s://%s:%s" %
+                        (l.scheme, l.host, l.port)))
             prefs.append(("capability.principal.codebase.p%s.subjectName" % i, ""))
 
         if proxy:
-            user_prefs = self.pac_prefs()
+            user_prefs = self.pac_prefs(proxy)
         else:
             user_prefs = []
 
         return prefs, user_prefs
 
-    def pac_prefs(self):
+    def pac_prefs(self, proxy):
         """
         return preferences for Proxy Auto Config. originally taken from
         http://mxr.mozilla.org/mozilla-central/source/build/automation.py.in
@@ -289,18 +287,20 @@ class Permissions(object):
 
         # We need to proxy every server but the primary one.
         origins = ["'%s'" % l.url()
-                   for l in self._locations
-                   if "primary" not in l.options]
+                   for l in self._locations]
+
         origins = ", ".join(origins)
 
-        # TODO: this is not a reliable way to determine the Proxy host
         for l in self._locations:
             if "primary" in l.options:
-                webServer = l.host
-                httpPort  = l.port
-                sslPort   = 443
+                webServer = proxy["webserver"]
+                httpPort  = proxy["webserver-port"]
+                sslPort   = proxy["ssl-port"]
 
         # TODO: this should live in a template!
+        # TODO: So changing the 5th line of the regex below from (\\\\\\\\d+)
+        # to (\\\\d+) makes this code work. Not sure why there would be this
+        # difference between automation.py.in and this file.
         pacURL = """data:text/plain,
 function FindProxyForURL(url, host)
 {
@@ -309,7 +309,7 @@ function FindProxyForURL(url, host)
                          '://' +
                          '(?:[^/@]*@)?' +
                          '(.*?)' +
-                         '(?::(\\\\\\\\d+))?/');
+                         '(?::(\\\\d+))?/');
   var matches = regex.exec(url);
   if (!matches)
     return 'DIRECT';
