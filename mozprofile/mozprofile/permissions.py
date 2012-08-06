@@ -148,7 +148,7 @@ class ServerLocations(object):
 
         This format:
         http://mxr.mozilla.org/mozilla-central/source/build/pgo/server-locations.txt
-        The only exception is that the port, if not defined, defaults to 80.
+        The only exception is that the port, if not defined, defaults to 80 or 443.
 
         FIXME: Shouldn't this default to the protocol-appropriate port?  Is
         there any reason to have defaults at all?
@@ -183,7 +183,11 @@ class ServerLocations(object):
                 host, port = netloc.rsplit(':', 1)
             except ValueError:
                 host = netloc
-                port = '80'
+                default_ports = {'http': '80',
+                                 'https': '443',
+                                 'ws': '443',
+                                 'wss': '443'}
+                port = default_ports.get(scheme, '80')
 
             try:
                 location = Location(scheme, host, port, options)
@@ -254,7 +258,7 @@ class Permissions(object):
         permDB.commit()
         cursor.close()
 
-    def network_prefs(self, proxy=None):
+    def network_prefs(self, proxy=False):
         """
         take known locations and generate preferences to handle permissions and proxy
         returns a tuple of prefs, user_prefs
@@ -271,13 +275,13 @@ class Permissions(object):
             prefs.append(("capability.principal.codebase.p%s.subjectName" % i, ""))
 
         if proxy:
-            user_prefs = self.pac_prefs(proxy)
+            user_prefs = self.pac_prefs()
         else:
             user_prefs = []
 
         return prefs, user_prefs
 
-    def pac_prefs(self, proxy):
+    def pac_prefs(self):
         """
         return preferences for Proxy Auto Config. originally taken from
         http://mxr.mozilla.org/mozilla-central/source/build/automation.py.in
@@ -293,9 +297,8 @@ class Permissions(object):
 
         for l in self._locations:
             if "primary" in l.options:
-                webServer = proxy["webserver"]
-                httpPort  = proxy["webserver-port"]
-                sslPort   = proxy["ssl-port"]
+                webServer = l.host
+                port = l.port
 
         # TODO: this should live in a template!
         # TODO: So changing the 5th line of the regex below from (\\\\\\\\d+)
@@ -330,15 +333,12 @@ function FindProxyForURL(url, host)
   var origin = matches[1] + '://' + matches[2] + ':' + matches[3];
   if (origins.indexOf(origin) < 0)
     return 'DIRECT';
-  if (isHttp)
-    return 'PROXY %(remote)s:%(httpport)s';
-  if (isHttps || isWebSocket || isWebSocketSSL)
-    return 'PROXY %(remote)s:%(sslport)s';
+  if (isHttp || isHttps || isWebSocket || isWebSocketSSL)
+    return 'PROXY %(remote)s:%(port)s';
   return 'DIRECT';
 }""" % { "origins": origins,
          "remote":  webServer,
-         "httpport":httpPort,
-         "sslport": sslPort }
+         "port": port }
         pacURL = "".join(pacURL.splitlines())
 
         prefs.append(("network.proxy.type", 2))

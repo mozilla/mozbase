@@ -80,7 +80,7 @@ http://127.0.0.1:8888           privileged
     def test_nw_prefs(self):
         perms = Permissions(self.profile_dir, self.locations_file.name)
 
-        prefs, user_prefs = perms.network_prefs(None)
+        prefs, user_prefs = perms.network_prefs(False)
 
         self.assertEqual(len(user_prefs), 0)
         self.assertEqual(len(prefs), 6)
@@ -98,9 +98,7 @@ http://127.0.0.1:8888           privileged
         self.assertEqual(prefs[5], ('capability.principal.codebase.p2.subjectName', ''))
 
 
-        prefs, user_prefs = perms.network_prefs({'webserver': 'localhost',
-                                                 'webserver-port': '8888',
-                                                 'ssl-port': '443'})
+        prefs, user_prefs = perms.network_prefs(True)
         self.assertEqual(len(user_prefs), 2)
         self.assertEqual(user_prefs[0], ('network.proxy.type', 2))
         self.assertEqual(user_prefs[1][0], 'network.proxy.autoconfig_url')
@@ -108,7 +106,7 @@ http://127.0.0.1:8888           privileged
         origins_decl = "var origins = ['http://mochi.test:8888', 'http://127.0.0.1:80', 'http://127.0.0.1:8888'];"
         self.assertTrue(origins_decl in user_prefs[1][1])
 
-        proxy_check = "if (isHttp)    return 'PROXY localhost:8888';  if (isHttps || isWebSocket || isWebSocketSSL)    return 'PROXY localhost:443';"
+        proxy_check = "if (isHttp || isHttps || isWebSocket || isWebSocketSSL)    return 'PROXY mochi.test:8888';"
         self.assertTrue(proxy_check in user_prefs[1][1])
 
 
