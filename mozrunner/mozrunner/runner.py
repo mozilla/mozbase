@@ -199,7 +199,8 @@ class Runner(object):
         if isinstance(self.process_handler, subprocess.Popen):
             self.process_handler.wait()
         else:
-            if not self.process_handler.waitForFinish(timeout) is 0:
+            self.process_handler.waitForFinish(timeout)
+            if self.process_handler.proc.poll() is None:
                 # waitForFinish timed out
                 return
 
