@@ -19,7 +19,7 @@ except (OSError, IOError):
 
 deps = ['mozinfo == 0.3.3',
         'mozprocess == 0.4',
-        'mozprofile == 0.5',
+        'mozprofile == 0.4',
        ]
 
 # we only support python 2 right now
