@@ -39,7 +39,7 @@ def abstractmethod(method):
 class DeviceManager:
 
   @abstractmethod
-  def shell(self, cmd, outputfile, env=None, cwd=None):
+  def shell(self, cmd, outputfile, env=None, cwd=None, timeout=None):
     """
     executes shell command on device
     returns:

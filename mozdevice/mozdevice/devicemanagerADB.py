@@ -8,6 +8,7 @@ import re
 import os
 import sys
 import tempfile
+import time
 
 class DeviceManagerADB(DeviceManager):
 
@@ -94,7 +95,7 @@ class DeviceManagerADB(DeviceManager):
   # returns:
   # success: <return code>
   # failure: None
-  def shell(self, cmd, outputfile, env=None, cwd=None):
+  def shell(self, cmd, outputfile, env=None, cwd=None, timeout=None):
     # FIXME: this function buffers all output of the command into memory,
     # always. :(
 
@@ -117,6 +118,15 @@ class DeviceManagerADB(DeviceManager):
     args.extend(["shell", cmdline])
     proc = subprocess.Popen(args,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if timeout:
+        start_time = time.time()
+        ret_code = proc.poll()
+        while ((time.time() - start_time) <= timeout) and ret_code == None:
+            time.sleep(1)
+            ret_code = proc.poll()
+        if ret_code == None:
+            proc.kill()
+            raise DMError("Timeout exceeded for shell call")
     (stdout, stderr) = proc.communicate()
     outputfile.write(stdout.rstrip('\n'))
 
@@ -710,7 +720,7 @@ class DeviceManagerADB(DeviceManager):
       args.insert(2, self.packageName)
     return self.runCmd(args)
 
-  def checkCmd(self, args):
+  def checkCmd(self, args, timeout=None):
     # If we are not root but have run-as, and we're trying to execute 
     # a shell command then using run-as is the best we can do
     finalArgs = [self.adbPath]
@@ -720,13 +730,24 @@ class DeviceManagerADB(DeviceManager):
       args.insert(1, "run-as")
       args.insert(2, self.packageName)
     finalArgs.extend(args)
+    if timeout:
+        proc = subprocess.Popen(finalArgs)
+        start_time = time.time()
+        ret_code = proc.poll()
+        while ((time.time() - start_time) <= timeout) and ret_code == None:
+            time.sleep(1)
+            ret_code = proc.poll()
+        if ret_code == None:
+            proc.kill()
+            raise DMError("Timeout exceeded for checkCmd call")
+        return ret_code
     return subprocess.check_call(finalArgs)
 
-  def checkCmdAs(self, args):
+  def checkCmdAs(self, args, timeout=None):
     if (self.useRunAs):
       args.insert(1, "run-as")
       args.insert(2, self.packageName)
-    return self.checkCmd(args)
+    return self.checkCmd(args, timeout)
 
   # external function
   # returns:

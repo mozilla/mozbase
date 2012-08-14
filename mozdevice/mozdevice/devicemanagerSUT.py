@@ -265,16 +265,16 @@ class DeviceManagerSUT(DeviceManager):
   # returns:
   # success: <return code>
   # failure: None
-  def shell(self, cmd, outputfile, env=None, cwd=None):
+  def shell(self, cmd, outputfile, env=None, cwd=None, timeout=None):
     cmdline = self._escapedCommandLine(cmd)
     if env:
       cmdline = '%s %s' % (self.formatEnvString(env), cmdline)
 
     try:
       if cwd:
-        self.sendCmds([{ 'cmd': 'execcwd %s %s' % (cwd, cmdline) }], outputfile)
+        self.sendCmds([{ 'cmd': 'execcwd %s %s' % (cwd, cmdline) }], outputfile, timeout)
       else:
-        self.sendCmds([{ 'cmd': 'exec su -c "%s"' % cmdline }], outputfile)
+        self.sendCmds([{ 'cmd': 'exec su -c "%s"' % cmdline }], outputfile, timeout)
     except AgentError:
       return None
 
