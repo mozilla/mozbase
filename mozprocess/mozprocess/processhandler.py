@@ -754,6 +754,10 @@ falling back to not using job objects for managing child processes"""
                 return ('', True)
             return (f.readline(), False)
 
+    @property
+    def pid(self):
+        return self.proc.pid
+
 
 ### default output handlers
 ### these should be callables that take the output line
