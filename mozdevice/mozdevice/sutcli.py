@@ -109,7 +109,7 @@ class SUTCli(object):
         if self.options.verbose:
             droid.DroidSUT.debug = 4
 
-        if not self.options.deviceip:
+        if not self.options.deviceip and not self.options.hwid:
             if not os.environ.get('TEST_DEVICE'):
                 self.parser.error("Must specify device ip in TEST_DEVICE or "
                                   "with --remoteDevice option")
@@ -126,14 +126,20 @@ class SUTCli(object):
                 command['max_args'] and len(command_args) > command['max_args']:
             self.parser.error("Wrong number of arguments")
 
-        self.dm = droid.DroidSUT(self.options.deviceip,
-                                 port=int(self.options.deviceport))
+        if self.options.hwid:
+            self.dm = droid.DroidConnectByHWID(self.options.hwid)
+        elif self.options.deviceip:
+            self.dm = droid.DroidSUT(self.options.deviceip,
+                                     port=int(self.options.deviceport))
         command['function'](*command_args)
 
     def add_options(self, parser):
         parser.add_option("-r", "--remoteDevice", action="store",
                           type="string", dest="deviceip",
                           help="Device IP", default=None)
+        parser.add_option("-d", "--hwid", action="store",
+                          type="string", dest="hwid",
+                          help="HWID", default=None)
         parser.add_option("-p", "--remotePort", action="store",
                           type="int", dest="deviceport",
                           help="SUTAgent port (defaults to 20701)",

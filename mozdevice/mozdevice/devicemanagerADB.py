@@ -12,7 +12,7 @@ import time
 class DeviceManagerADB(DeviceManager):
 
     def __init__(self, host=None, port=20701, retrylimit=5, packageName='fennec',
-                 adbPath='adb', deviceSerial=None, deviceRoot=None):
+                 adbPath='adb', deviceSerial=None, deviceRoot=None, **kwargs):
         self.host = host
         self.port = port
         self.retrylimit = retrylimit
