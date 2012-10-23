@@ -225,7 +225,7 @@ def main(args=sys.argv[1:]):
                       if i not in unrolled])
     for package, version in pypi_deps.items():
         # easy_install should be available since we rely on setuptools
-        call(['easy_install', version])
+        call(['easy_install', version], cwd=here)
 
     # set up the packages for development
     for package in unrolled:
