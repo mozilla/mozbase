@@ -19,6 +19,7 @@ Contents:
    mozcrash
    mozfile
    mozprofile
+   mozinfo
    mozlog
    manifestdestiny
 

@@ -4,19 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""
-file for interface to transform introspected system information to a format
-pallatable to Mozilla
-
-Information:
-- os : what operating system ['win', 'mac', 'linux', ...]
-- bits : 32 or 64
-- processor : processor architecture ['x86', 'x86_64', 'ppc', ...]
-- version : operating system version string
-
-For windows, the service pack information is also included
-"""
-
 # TODO: it might be a good idea of adding a system name (e.g. 'Ubuntu' for
 # linux) to the information; I certainly wouldn't want anyone parsing this
 # information and having behaviour depend on it
