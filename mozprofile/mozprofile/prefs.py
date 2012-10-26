@@ -29,7 +29,8 @@ class Preferences(object):
 
     def add(self, prefs, cast=False):
         """
-        - cast: whether to cast strings to value, e.g. '1' -> 1
+        :param prefs:
+        :param cast: whether to cast strings to value, e.g. '1' -> 1
         """
         # wants a list of 2-tuples
         if isinstance(prefs, dict):
@@ -39,7 +40,10 @@ class Preferences(object):
         self._prefs += prefs
 
     def add_file(self, path):
-        """a preferences from a file"""
+        """a preferences from a file
+        
+        :param path:
+        """
         self.add(self.read(path))
 
     def __call__(self):
@@ -51,6 +55,7 @@ class Preferences(object):
         interpolate a preference from a string
         from the command line or from e.g. an .ini file, there is no good way to denote
         what type the preference value is, as natively it is a string
+
         - integers will get cast to integers
         - true/false will get cast to True/False
         - anything enclosed in single quotes will be treated as a string with the ''s removed from both sides

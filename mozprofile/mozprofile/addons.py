@@ -16,12 +16,12 @@ AMO_API_VERSION = "1.5"
 
 class AddonManager(object):
     """
-    Handles all operations regarding addons including: installing and cleaning addons
+    Handles all operations regarding addons in a profile including: installing and cleaning addons
     """
 
     def __init__(self, profile):
         """
-        profile - the path to the profile for which we install addons
+        :param profile: the path to the profile for which we install addons
         """
         self.profile = profile
 
@@ -36,8 +36,9 @@ class AddonManager(object):
     def install_addons(self, addons=None, manifests=None):
         """
         Installs all types of addons
-        addons - a list of addon paths to install
-        manifest - a list of addon manifests to install
+
+        :param addons: a list of addon paths to install
+        :param manifest: a list of addon manifests to install
         """
         # install addon paths
         if addons:
@@ -57,7 +58,7 @@ class AddonManager(object):
     def install_from_manifest(self, filepath):
         """
         Installs addons from a manifest
-        filepath - path to the manifest of addons to install
+        :param filepath: path to the manifest of addons to install
         """
         manifest = ManifestParser()
         manifest.read(filepath)
@@ -82,9 +83,11 @@ class AddonManager(object):
     @classmethod
     def get_amo_install_path(self, query):
         """
-        Return the addon xpi install path for the specified AMO query.
-        See: https://developer.mozilla.org/en/addons.mozilla.org_%28AMO%29_API_Developers%27_Guide/The_generic_AMO_API
-        for query documentation.
+        Get the addon xpi install path for the specified AMO query.
+
+        :param query: query-documentation_
+
+        .. _query-documentation: https://developer.mozilla.org/en/addons.mozilla.org_%28AMO%29_API_Developers%27_Guide/The_generic_AMO_API
         """
         response = urllib2.urlopen(query)
         dom = minidom.parseString(response.read())
@@ -95,13 +98,16 @@ class AddonManager(object):
     @classmethod
     def addon_details(cls, addon_path):
         """
-        returns a dictionary of details about the addon
-        - addon_path : path to the addon directory
-        Returns:
-        {'id':      u'rainbow@colors.org', # id of the addon
-         'version': u'1.4',                # version of the addon
-         'name':    u'Rainbow',            # name of the addon
-         'unpack':  False } # whether to unpack the addon
+        Returns a dictionary of details about the addon.
+
+        :param addon_path: path to the addon directory
+        
+        Returns::
+
+            {'id':      u'rainbow@colors.org', # id of the addon
+             'version': u'1.4',                # version of the addon
+             'name':    u'Rainbow',            # name of the addon
+             'unpack':  False } # whether to unpack the addon
         """
 
         # TODO: We don't use the unpack variable yet, but we should: bug 662683
@@ -152,10 +158,10 @@ class AddonManager(object):
 
     def install_from_path(self, path, unpack=False):
         """
-        Installs addon from a filepath, url
-        or directory of addons in the profile.
-        - path: url, path to .xpi, or directory of addons
-        - unpack: whether to unpack unless specified otherwise in the install.rdf
+        Installs addon from a filepath, url or directory of addons in the profile.
+
+        :param path: url, path to .xpi, or directory of addons
+        :param unpack: whether to unpack unless specified otherwise in the install.rdf
         """
 
         # if the addon is a url, download it

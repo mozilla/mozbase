@@ -21,15 +21,17 @@ class Profile(object):
     """Handles all operations regarding profile. Created new profiles, installs extensions,
     sets preferences and handles cleanup."""
 
-    def __init__(self,
-                 profile=None, # Path to the profile
-                 addons=None,  # String of one or list of addons to install
-                 addon_manifests=None,  # Manifest for addons, see http://ahal.ca/blog/2011/bulk-installing-fx-addons/
-                 preferences=None, # Dictionary or class of preferences
-                 locations=None, # locations to proxy
-                 proxy=None, # setup a proxy - dict of server-loc,server-port,ssl-port
-                 restore=True # If true remove all installed addons preferences when cleaning up
-                 ):
+    def __init__(self, profile=None, addons=None, addon_manifests=None,  
+                 preferences=None, locations=None, proxy=None, restore=True):
+        """
+        :param profile: Path to the profile
+        :param addons: String of one or list of addons to install
+        :param addon_manifests: Manifest for addons, see http://ahal.ca/blog/2011/bulk-installing-fx-addons/
+        :param preferences: Dictionary or class of preferences
+        :param locations: locations to proxy
+        :param proxy: setup a proxy - dict of server-loc,server-port,ssl-port
+        :param restore: If true remove all installed addons preferences when cleaning up
+        """
 
         # if true, remove installed addons/prefs afterwards
         self.restore = restore
@@ -110,7 +112,6 @@ class Profile(object):
 
     def set_preferences(self, preferences, filename='user.js'):
         """Adds preferences dict to profile preferences"""
-
 
         # append to the file
         prefs_file = os.path.join(self.profile, filename)
@@ -254,6 +255,7 @@ class FirefoxProfile(Profile):
                    }
 
 class ThunderbirdProfile(Profile):
+    """Specialized Profile subclass for Thunderbird"""
     preferences = {'extensions.update.enabled'    : False,
                    'extensions.update.notifyUser' : False,
                    'browser.shell.checkDefaultBrowser' : False,
