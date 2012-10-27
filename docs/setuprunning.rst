@@ -11,3 +11,4 @@ correctly handling the case where the system crashes.
 
    mozprofile
    mozcrash
+   mozprocess

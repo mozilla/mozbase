@@ -1,7 +1,7 @@
-mozprocess
-==========
+:mod:`mozprocess` --- Launch and manage processes
+=================================================
 
-mozprocess is a process-handling module that provides some additional features beyond those available with
+Mozprocess is a process-handling module that provides some additional features beyond those available with
 python's subprocess:
 
 * better handling of child processes, especially on Windows

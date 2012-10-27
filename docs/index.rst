@@ -36,13 +36,12 @@ module. Figure out what you want to do then dive in!
    :maxdepth: 2
 
    overview
-   mozfile
-   mozprocess
    manifestdestiny
    mozinfo
    setuprunning
    mozhttpd
    loggingreporting
+   mozfile
 
 Indices and tables
 ==================
