@@ -21,7 +21,7 @@ class B2GMixin(object):
 
     def __init__(self, host=None, marionetteHost=None, marionettePort=2828,
                  **kwargs):
-
+ 
         # (allowing marionneteHost to be specified seems a bit
         # counter-intuitive since we normally get it below from the ip
         # address, however we currently need it to be able to connect
@@ -33,13 +33,16 @@ class B2GMixin(object):
         self.marionettePort = marionettePort
 
     def cleanup(self):
+        """
+        If a user profile was setup on the device, restore it to the original.
+        """
         if self.profileDir:
             self.restoreProfile()
 
     def waitForPort(self, timeout):
-        """
-        Wait for the marionette server to respond.
-        Timeout parameter is in seconds
+        """Waits for the marionette server to respond, until the timeout specified.
+
+	:param timeout: Timeout parameter in seconds.
         """
         print "waiting for port"
         starttime = datetime.datetime.now()
@@ -61,9 +64,9 @@ class B2GMixin(object):
 
     def setupMarionette(self):
         """
-        Start a marionette session.
-        If no host is given, then this will get the ip
-        of the device, and set up networking if needed.
+        Starts a marionette session.
+        If no host was given at init, the ip of the device will be retrieved
+        and networking will be established.
         """
         if not self.marionetteHost:
             self.setupDHCP()
@@ -76,7 +79,7 @@ class B2GMixin(object):
 
     def restartB2G(self):
         """
-        Restarts the b2g process on the device
+        Restarts the b2g process on the device.
         """
         #restart b2g so we start with a clean slate
         if self.marionette and self.marionette.session:
@@ -92,10 +95,9 @@ class B2GMixin(object):
         self.shellCheckOutput(['start', 'b2g'])
 
     def setupProfile(self, prefs=None):
-        """
-        Sets up the user profile on the device,
-        The 'prefs' is a string of user_prefs to add to the profile.
-        If it is not set, it will default to a standard b2g testing profile.
+        """Sets up the user profile on the device.
+
+        :param prefs: String of user_prefs to add to the profile. Defaults to a standard b2g testing profile.
         """
         if not prefs:
             prefs = """
@@ -123,10 +125,9 @@ user_pref("devtools.debugger.force-local", false);
         self.setupMarionette()
 
     def setupDHCP(self, conn_type='eth0'):
-        """
-        Sets up networking.
+        """Sets up networking.
 
-        If conn_type is not set, it will assume eth0.
+        :param conn_type: Network connection type. Defaults to eth0.
         """
         tries = 5
         while tries > 0:
@@ -142,7 +143,7 @@ user_pref("devtools.debugger.force-local", false);
 
     def restoreProfile(self):
         """
-        Restores the original profile
+        Restores the original user profile on the device.
         """
         if not self.profileDir:
             raise DMError("There is no profile to restore")
@@ -156,6 +157,8 @@ user_pref("devtools.debugger.force-local", false);
     def getAppInfo(self):
         """
         Returns the appinfo, with an additional "date" key.
+
+        :rtype: dictionary
         """
         if not self.marionette or not self.marionette.session:
             self.setupMarionette()

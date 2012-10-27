@@ -16,6 +16,7 @@ Contents:
    :maxdepth: 2
 
    overview
+   mozb2g
    mozfile
 
 Indices and tables
