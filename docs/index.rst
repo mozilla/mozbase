@@ -35,6 +35,9 @@ module. Figure out what you want to do then dive in!
 .. toctree::
    :maxdepth: 2
 
+   overview
+   mozfile
+   mozprocess
    manifestdestiny
    mozinfo
    setuprunning

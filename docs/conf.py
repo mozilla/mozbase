@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.abspath('../mozhttpd'))
 sys.path.insert(0, os.path.abspath('../mozlog'))
 sys.path.insert(0, os.path.abspath('../mozcrash'))
 sys.path.insert(0, os.path.abspath('../mozinfo'))
+sys.path.insert(0, os.path.abspath('../mozprocess'))
 
 # -- General configuration -----------------------------------------------------
 
