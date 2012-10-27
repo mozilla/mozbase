@@ -163,6 +163,13 @@ class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 class MozHttpd(object):
     """
+    :param host: Host from which to serve (default 127.0.0.1)
+    :param port: Port from which to serve (default 8888)
+    :param docroot: Server root (default os.getcwd())
+    :param urlhandlers: Handlers to specify behavior against method and path match (default None)
+    :param proxy_host_dirs: Toggle proxy behavior (default False)
+    :param log_requests: Toggle logging behavior (default False)
+
     Very basic HTTP server class. Takes a docroot (path on the filesystem)
     and a set of urlhandler dictionaries of the form:
 

@@ -18,6 +18,7 @@ Contents:
    overview
    mozcrash
    mozfile
+   mozhttpd
    mozprofile
    mozinfo
    mozlog
