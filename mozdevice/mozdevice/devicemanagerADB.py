@@ -272,14 +272,7 @@ class DeviceManagerADB(DeviceManager):
         Does a recursive delete of directory on the device: rm -Rf remoteDir
         """
         if (self.dirExists(remoteDir)):
-            files = self.listFiles(remoteDir.strip())
-            for f in files:
-                path = remoteDir.strip() + "/" + f.strip()
-                if self.dirExists(path):
-                    self.removeDir(path)
-                else:
-                    self.removeFile(path)
-            self._removeSingleDir(remoteDir.strip())
+            self._runCmd(["shell", "rm", "-r", remoteDir])
         else:
             self.removeFile(remoteDir.strip())
 
