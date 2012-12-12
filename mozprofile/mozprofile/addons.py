@@ -53,7 +53,7 @@ class AddonManager(object):
                 manifests = [manifests]
             for manifest in manifests:
                 self.install_from_manifest(manifest)
-            self.installed_manifests.extended(manifests)
+            self.installed_manifests.extend(manifests)
 
     def install_from_manifest(self, filepath):
         """
