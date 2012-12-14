@@ -17,7 +17,7 @@ import sys, os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 here = os.path.dirname(os.path.abspath(__file__))
-parent = os.path.dirname(here))
+parent = os.path.dirname(here)
 for item in os.listdir(parent):
     path = os.path.join(parent, item)
     if (not os.path.isdir(path)) or (not os.path.exists(os.path.join(path, 'setup.py'))):
