@@ -4,27 +4,22 @@
 
 from setuptools import setup
 
-PACKAGE_VERSION = '0.18'
+PACKAGE_VERSION = '0.1'
 
-deps = ['mozprocess == 0.8']
+deps=[]
 
-setup(name='mozdevice',
+setup(name='moznetwork',
       version=PACKAGE_VERSION,
-      description="Mozilla-authored device management",
+      description="Library of network utilities for use in Mozilla testing",
       long_description="see http://mozbase.readthedocs.org/",
       classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-      keywords='',
-      author='Mozilla Automation and Testing Team',
+      keywords='mozilla',
+      author='Mozilla Automation and Tools team',
       author_email='tools@lists.mozilla.org',
       url='https://wiki.mozilla.org/Auto-tools/Projects/MozBase',
       license='MPL',
-      packages=['mozdevice'],
+      packages=['moznetwork'],
       include_package_data=True,
       zip_safe=False,
-      install_requires=deps,
-      entry_points="""
-      # -*- Entry points: -*-
-      [console_scripts]
-      dm = mozdevice.dmcli:cli
-      """,
+      install_requires=deps
       )

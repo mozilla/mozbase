@@ -16,7 +16,7 @@ import os
 import urllib
 import urlparse
 import re
-import iface
+import moznetwork
 import time
 from SocketServer import ThreadingMixIn
 
@@ -269,7 +269,7 @@ def main(args=sys.argv[1:]):
         parser.error("mozhttpd does not take any arguments")
 
     if options.external_ip:
-        host = iface.get_lan_ip()
+        host = moznetwork.get_lan_ip()
     else:
         host = options.host
 

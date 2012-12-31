@@ -18,11 +18,16 @@ def _get_interface_ip(ifname):
 
 def get_lan_ip():
     try:
-        ip = socket.gethostbyname(socket.gethostname())
-    except socket.gaierror:  # for Mac OS X
-        ip = socket.gethostbyname(socket.gethostname() + ".local")
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:  # for Mac OS X
+            ip = socket.gethostbyname(socket.gethostname() + ".local")
+    except socket.gaierror:
+        # sometimes the hostname doesn't resolve to an ip address, in which
+        # case this will always fail
+        ip = None
 
-    if ip.startswith("127.") and os.name != "nt":
+    if ip is None or ip.startswith("127.") and os.name != "nt":
         interfaces = ["eth0", "eth1", "eth2", "wlan0", "wlan1", "wifi0", "ath0", "ath1", "ppp0"]
         for ifname in interfaces:
             try:

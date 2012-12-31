@@ -217,8 +217,8 @@ class DeviceManagerADB(DeviceManager):
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
                 self.pushFile(localZip, remoteZip, retryLimit=retryLimit)
                 os.remove(localZip)
-                data = self._runCmdAs(["shell", "unzip", "-o", remoteZip, "-d", remoteDir],
-                        retryLimit=retryLimit).stdout.read()
+                data = self._runCmdAs(["shell", "unzip", "-o", remoteZip,
+                                       "-d", remoteDir]).stdout.read()
                 self._checkCmdAs(["shell", "rm", remoteZip], retryLimit=retryLimit)
                 if re.search("unzip: exiting", data) or re.search("Operation not permitted", data):
                     raise Exception("unzip failed, or permissions error")
