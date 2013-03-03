@@ -13,3 +13,5 @@ with preset preferences for those applications.
 from profile import *
 from addons import *
 from cli import *
+from prefs import *
+from webapps import *

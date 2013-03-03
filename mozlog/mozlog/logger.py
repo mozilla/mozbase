@@ -18,12 +18,14 @@ END        = _default_level + 2
 PASS       = _default_level + 3
 KNOWN_FAIL = _default_level + 4
 FAIL       = _default_level + 5
+CRASH      = _default_level + 6
 # Define associated text of log levels
 addLevelName(START, 'TEST-START')
 addLevelName(END, 'TEST-END')
 addLevelName(PASS, 'TEST-PASS')
 addLevelName(KNOWN_FAIL, 'TEST-KNOWN-FAIL')
 addLevelName(FAIL, 'TEST-UNEXPECTED-FAIL')
+addLevelName(CRASH, 'PROCESS-CRASH')
 
 class MozLogger(_LoggerClass):
     """
@@ -49,6 +51,10 @@ class MozLogger(_LoggerClass):
     def testKnownFail(self, message, *args, **kwargs):
         """Logs a test known fail message"""
         self.log(KNOWN_FAIL, message, *args, **kwargs)
+
+    def processCrash(self, message, *args, **kwargs):
+        """Logs a process crash message"""
+        self.log(CRASH, message, *args, **kwargs)
 
 class _MozFormatter(Formatter):
     """

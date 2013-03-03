@@ -87,7 +87,7 @@ class DeviceManager:
             parts = filename.split('/')
             name = ""
             for part in parts:
-                if part == parts[-1]:
+                if part is parts[-1]:
                     break
                 if part != "":
                     name += '/' + part
@@ -638,7 +638,7 @@ class NetworkTools:
                 except:
                     if seed > maxportnum:
                         print "Automation Error: Could not find open port after checking 5000 ports"
-                    raise
+                        raise
                 seed += 1
         except:
             print "Automation Error: Socket error trying to find open port"

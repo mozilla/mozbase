@@ -14,3 +14,9 @@ dist
 proclaunch
 .idea
 docs/_build
+bin
+include
+lib
+local
+*.orig
+*.rej

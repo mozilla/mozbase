@@ -4,7 +4,7 @@
 
 from setuptools import setup
 
-PACKAGE_VERSION = '0.18'
+PACKAGE_VERSION = '0.19'
 
 deps = ['mozprocess == 0.8']
 
@@ -26,5 +26,6 @@ setup(name='mozdevice',
       # -*- Entry points: -*-
       [console_scripts]
       dm = mozdevice.dmcli:cli
+      sutini = mozdevice.sutini:main
       """,
       )

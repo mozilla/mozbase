@@ -76,6 +76,13 @@ class MozProfileCLI(object):
 
         return prefs()
 
+    def profile(self, restore=False):
+        """create the profile"""
+
+        kwargs = self.profile_args()
+        kwargs['restore'] = restore
+        return Profile(**kwargs)
+
 
 def cli(args=sys.argv[1:]):
     """ Handles the command line arguments for ``mozprofile`` via ``sys.argv``"""
@@ -84,9 +91,7 @@ def cli(args=sys.argv[1:]):
     cli = MozProfileCLI(args)
 
     # create the profile
-    kwargs = cli.profile_args()
-    kwargs['restore'] = False
-    profile = Profile(**kwargs)
+    profile = cli.profile()
 
     # if no profile was passed in print the newly created profile
     if not cli.options.profile:

@@ -166,37 +166,6 @@ class B2GMixin(object):
         shutil.rmtree(self.profileDir)
         self.profileDir = None
 
-    def unlock(self):
-        """
-        Unlocks the device, ensuring it will never go back to the lockscreen
-        """
-        if not self.marionette or not self.marionette.session:
-            self.setupMarionette()
-
-        success = self.marionette.execute_async_script("""
-let setlock = window.wrappedJSObject.SettingsListener.getSettingsLock();
-let obj = {'screen.timeout': 0};
-setlock.set(obj);
-waitFor(
-function() {
-window.wrappedJSObject.LockScreen.unlock();
-waitFor(
-function() {
-finish(window.wrappedJSObject.LockScreen.locked);
-},
-function() {
-return !window.wrappedJSObject.LockScreen.locked;
-}
-);
-},
-function() {
-return !!window.wrappedJSObject.LockScreen;
-}
-);
-""")
-        if not success:
-            raise DMError("Unable to unlock device")
-
     def getAppInfo(self):
         """
         Returns the appinfo, with an additional "date" key.

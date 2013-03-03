@@ -45,7 +45,10 @@ if system in ["Microsoft", "Windows"]:
         service_pack = os.sys.getwindowsversion()[4]
         info['service_pack'] = service_pack
 elif system == "Linux":
-    (distro, version, codename) = platform.dist()
+    if hasattr(platform, "linux_distribution"):
+        (distro, version, codename) = platform.linux_distribution()
+    else:
+        (distro, version, codename) = platform.dist()
     version = "%s %s" % (distro, version)
     if not processor:
         processor = machine
@@ -134,12 +137,7 @@ def main(args=None):
         try:
             from json import loads
         except ImportError:
-            try:
-                from simplejson import loads
-            except ImportError:
-                def loads(string):
-                    """*really* simple json; will not work with unicode"""
-                    return eval(string, {'true': True, 'false': False, 'null': None})
+            from simplejson import loads
         for arg in args:
             if _os.path.exists(arg):
                 string = file(arg).read()
