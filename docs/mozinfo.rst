@@ -19,9 +19,9 @@ is it defined what we are checking for.
 `mozinfo <https://github.com/mozilla/mozbase/tree/master/mozinfo>`_
 proposes to solve this problem.  mozinfo is a bridge interface,
 making the underlying (complex) plethora of OS and architecture
-combinations conform to a subset of values of relavence to
-Mozilla software. The current implementation exposes relavent key,
-values: ``os``, ``version``, ``bits``, and ``processor``.  Additionally, the
+combinations conform to a subset of values of relevance to
+Mozilla software. The current implementation exposes relevant keys and
+values such as: ``os``, ``version``, ``bits``, and ``processor``.  Additionally, the
 service pack in use is available on the windows platform.
 
 
@@ -31,7 +31,7 @@ API Usage
 mozinfo is a python package.  Downloading the software and running
 ``python setup.py develop`` will allow you to do ``import mozinfo``
 from python.
-`mozinfo.py <https://github.com/mozilla/mozbase/blob/master/mozinfo/mozinfo.py>`_
+`mozinfo.py <https://raw.github.com/mozilla/mozbase/master/mozinfo/mozinfo/mozinfo.py>`_
 is the only file contained is this package,
 so if you need a single-file solution, you can just download or call
 this file through the web.
