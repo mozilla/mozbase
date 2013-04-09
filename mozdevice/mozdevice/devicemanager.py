@@ -213,12 +213,12 @@ class DeviceManager(object):
         if not self.dirExists(dirParts[0]):
             parts = filename.split('/')
             name = ""
-            for part in parts:
-                if part is parts[-1]:
+            for i, part in enumerate(parts):
+                if i is len(parts)-1:
                     break
                 if part != "":
                     name += '/' + part
-                    self.mkDir(name) # mkDir will check previous existence
+                    self.mkDir(name)  # mkDir will check previous existence
 
     @abstractmethod
     def dirExists(self, dirpath):
