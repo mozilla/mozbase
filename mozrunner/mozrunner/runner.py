@@ -103,13 +103,15 @@ class Runner(object):
                                        info['CFBundleExecutable'])
 
         self.cmdargs = cmdargs or []
-        _cmdargs = [i for i in self.cmdargs
+        # '~' should be expanded; see
+        # - https://bugzilla.mozilla.org/show_bug.cgi?id=874476
+        _cmdargs = [os.path.expanduser(i) for i in self.cmdargs
                     if i != '-foreground']
+        self.cmdargs = _cmdargs
         if len(_cmdargs) != len(self.cmdargs):
             # foreground should be last; see
             # - https://bugzilla.mozilla.org/show_bug.cgi?id=625614
             # - https://bugzilla.mozilla.org/show_bug.cgi?id=626826
-            self.cmdargs = _cmdargs
             self.cmdargs.append('-foreground')
 
         # process environment
