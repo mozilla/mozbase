@@ -521,8 +521,14 @@ falling back to not using job objects for managing child processes"""
 
                 if not self._ignore_children:
                     try:
-                        # os.waitpid returns a (pid, status) tuple
-                        return os.waitpid(self.pid, 0)[1]
+                        # os.waitpid return value:
+                        # > [...] a tuple containing its pid and exit status
+                        # > indication: a 16-bit number, whose low byte is the
+                        # > signal number that killed the process, and whose
+                        # > high byte is the exit status (if the signal number
+                        # > is zero)
+                        # - http://docs.python.org/2/library/os.html#os.wait
+                        return os.waitpid(self.pid, 0)[1] >> 8
                     except OSError, e:
                         if getattr(e, "errno", None) != 10:
                             # Error 10 is "no child process", which could indicate normal
@@ -736,6 +742,8 @@ falling back to not using job objects for managing child processes"""
         If timeout is not None, will return after timeout seconds.
         This timeout only causes the wait function to return and
         does not kill the process.
+
+        Returns the process's exit code.
         """
         if self.outThread:
             # Thread.join() blocks the main thread until outThread is finished
