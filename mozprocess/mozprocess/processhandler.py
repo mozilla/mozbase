@@ -31,8 +31,8 @@ class ProcessHandlerMixin(object):
     """
     A class for launching and manipulating local processes.
 
-    :param cmd: command to run.
-    :param args: is a list of arguments to pass to the command (defaults to None).
+    :param cmd: command to run. May be a string or a list. If specified as a list, the first element will be interpreted as the command, and all additional elements will be interpreted as arguments to that command.
+    :param args: list of arguments to pass to the command (defaults to None). Must not be set when `cmd` is specified as a list.
     :param cwd: working directory for command (defaults to None).
     :param env: is the environment to use for the process (defaults to os.environ).
     :param ignore_children: causes system to ignore child processes when True, defaults to False (which tracks child processes).
@@ -582,11 +582,12 @@ falling back to not using job objects for managing child processes"""
 
         # It is common for people to pass in the entire array with the cmd and
         # the args together since this is how Popen uses it.  Allow for that.
-        if not isinstance(self.cmd, list):
-            self.cmd = [self.cmd]
-
-        if self.args:
-            self.cmd = self.cmd + self.args
+        if isinstance(self.cmd, list):
+            if self.args != None:
+                raise TypeError("cmd and args must not both be lists")
+            (self.cmd, self.args) = (self.cmd[0], self.cmd[1:])
+        elif self.args is None:
+            self.args = []
 
     @property
     def timedOut(self):
@@ -624,7 +625,7 @@ falling back to not using job objects for managing child processes"""
         args.update(self.keywordargs)
 
         # launch the process
-        self.proc = self.Process(self.cmd, **args)
+        self.proc = self.Process([self.cmd] + self.args, **args)
 
         self.processOutput(timeout=timeout, outputTimeout=outputTimeout)
 
