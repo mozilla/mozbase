@@ -2,14 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import mozlog
 import subprocess
-from devicemanager import DeviceManager, DMError, _pop_last_line
 import re
 import os
 import shutil
 import tempfile
 import time
+
+from devicemanager import DeviceManager, DMError, _pop_last_line
+import mozfile
+import mozlog
+
 
 class DeviceManagerADB(DeviceManager):
     """
@@ -152,7 +155,7 @@ class DeviceManagerADB(DeviceManager):
     def forward(self, local, remote):
         """
         Forward socket connections.
-        
+
         Forward specs are one of:
           tcp:<port>
           localabstract:<unix domain socket name>
@@ -219,7 +222,7 @@ class DeviceManagerADB(DeviceManager):
                 subprocess.Popen(["zip", "-r", localZip, '.'], cwd=localDir,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
                 self.pushFile(localZip, remoteZip, retryLimit=retryLimit, createDir=False)
-                os.remove(localZip)
+                mozfile.remove(localZip)
                 data = self._runCmd(["shell", "unzip", "-o", remoteZip,
                                      "-d", remoteDir]).stdout.read()
                 self._checkCmd(["shell", "rm", remoteZip],
@@ -236,7 +239,7 @@ class DeviceManagerADB(DeviceManager):
             tmpDirTarget = os.path.join(tmpDir, "tmp")
             shutil.copytree(localDir, tmpDirTarget)
             self._checkCmd(["push", tmpDirTarget, remoteDir], retryLimit=retryLimit)
-            shutil.rmtree(tmpDir)
+            mozfile.remove(tmpDir)
 
     def dirExists(self, remotePath):
         p = self._runCmd(["shell", "ls", "-a", remotePath + '/'])
@@ -409,7 +412,7 @@ class DeviceManagerADB(DeviceManager):
             ret = f.read()
 
         f.close()
-        os.remove(localFile)
+        mozfile.remove(localFile)
         return ret
 
     def getFile(self, remoteFile, localFile):
@@ -436,7 +439,7 @@ class DeviceManagerADB(DeviceManager):
             return None
 
         md5 = self._getLocalHash(localFile)
-        os.remove(localFile)
+        mozfile.remove(localFile)
 
         return md5
 

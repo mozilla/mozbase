@@ -7,6 +7,7 @@
 from contextlib import contextmanager
 import os
 import shutil
+import stat
 import tarfile
 import tempfile
 import urlparse
@@ -19,6 +20,7 @@ __all__ = ['extract_tarball',
            'extract',
            'is_url',
            'load',
+           'remove',
            'rmtree',
            'tree',
            'NamedTemporaryFile',
@@ -28,6 +30,7 @@ try:
     WindowsError
 except NameError:
     WindowsError = None # so we can unconditionally catch it later...
+
 
 ### utilities for extracting archives
 
@@ -114,78 +117,67 @@ def extract(src, dest=None):
 
     return top_level_files
 
-### utility for broken windows.
 
-def _call_with_windows_retry(func, filename, num_retries=5, retry_delay=0.5):
-    """
-    It's possible to see spurious errors on Windows due to various things
-    keeping a handle to the directory open (explorer, virus scanners, etc)
-    So we try a few times if it fails with a known error.
-    """
-    retry_count = 0
-    while True:
-        try:
-            func(filename)
-            break
-        except WindowsError as e:
-            # Error 145 == "the directory is not empty"
-            # Error 32 == "The process cannot access the file because it is being used by another process"
-            if retry_count == num_retries or e.winerror not in [32, 145]:
-                raise
-            retry_count += 1
-            print "Retrying removal of", filename, "as Windows thinks it is in use"
-            time.sleep(retry_delay)
-
-### utilities for directory trees
+### utilities for removal of files and directories
 
 def rmtree(dir):
-    """Removes the specified directory tree
+    """Deprecated wrapper method to remove a directory tree.
+
+    Ensure to update your code to use mozfile.remove() directly
+
+    :param dir: directory to be removed
+    """
+
+    remove(dir)
+
+
+def remove(path):
+    """Removes the specified file, link, or directory tree
 
     This is a replacement for shutil.rmtree that works better under
-    windows."""
-    # (Thanks to Bear at the OSAF for the code.)
-    if not os.path.exists(dir):
+    windows.
+
+    :param path: path to be removed
+    """
+
+    def _call_with_windows_retry(func, path, retry_max=5, retry_delay=0.5):
+        """
+        It's possible to see spurious errors on Windows due to various things
+        keeping a handle to the directory open (explorer, virus scanners, etc)
+        So we try a few times if it fails with a known error.
+        """
+        retry_count = 0
+        while True:
+            try:
+                func(path)
+                break
+            except WindowsError as e:
+                # Error   5 == Access is denied
+                # Error  32 == The process cannot access the file because it is
+                #              being used by another process
+                # Error 145 == The directory is not empty
+
+                if retry_count == retry_max or e.winerror not in [5, 32, 145]:
+                    raise
+                retry_count += 1
+
+                print 'Retrying to remove "%s" because it is in use.' % path
+                time.sleep(retry_delay)
+
+    if not os.path.exists(path):
         return
-    if os.path.islink(dir):
-        os.remove(dir)
-        return
 
-    # Verify the directory is read/write/execute for the current user
-    os.chmod(dir, 0700)
+    path_stats = os.stat(path)
 
-    # os.listdir below only returns a list of unicode filenames
-    # if the parameter is unicode.
-    # If a non-unicode-named dir contains a unicode filename,
-    # that filename will get garbled.
-    # So force dir to be unicode.
-    if not isinstance(dir, unicode):
-        try:
-            dir = unicode(dir, "utf-8")
-        except UnicodeDecodeError:
-            if os.environ.get('DEBUG') == '1':
-                print("rmtree: decoding from UTF-8 failed for directory: %s" %s)
+    if os.path.isfile(path) or os.path.islink(path):
+        # Verify the file or link is read/write for the current user
+        os.chmod(path, path_stats.st_mode | stat.S_IRUSR | stat.S_IWUSR)
+        _call_with_windows_retry(os.remove, path)
 
-    for name in os.listdir(dir):
-        full_name = os.path.join(dir, name)
-        # on Windows, if we don't have write permission we can't remove
-        # the file/directory either, so turn that on
-        if os.name == 'nt':
-            if not os.access(full_name, os.W_OK):
-                # I think this is now redundant, but I don't have an NT
-                # machine to test on, so I'm going to leave it in place
-                # -warner
-                os.chmod(full_name, 0600)
-
-        if os.path.islink(full_name):
-            os.remove(full_name)
-        elif os.path.isdir(full_name):
-            rmtree(full_name)
-        else:
-            if os.path.isfile(full_name):
-                os.chmod(full_name, 0700)
-            _call_with_windows_retry(os.remove, full_name)
-
-    _call_with_windows_retry(os.rmdir, dir)
+    elif os.path.isdir(path):
+        # Verify the directory is read/write/execute for the current user
+        os.chmod(path, path_stats.st_mode | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        _call_with_windows_retry(shutil.rmtree, path)
 
 def depth(directory):
     """returns the integer depth of a directory or path relative to '/' """

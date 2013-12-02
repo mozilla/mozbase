@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from StringIO import StringIO
 import ConfigParser
 import os
@@ -11,6 +15,7 @@ import time
 
 from runner import Runner
 from mozdevice import DMError
+import mozfile
 import mozlog
 
 __all__ = ['RemoteRunner', 'B2GRunner', 'remote_runners']
@@ -58,7 +63,7 @@ class RemoteRunner(Runner):
 
             crashed = super(RemoteRunner, self).check_for_crashes(local_dump_dir, \
                                                                   test_name=last_test)
-            shutil.rmtree(local_dump_dir)
+            mozfile.remove(local_dump_dir)
             self.dm.removeDir(remote_dump_dir)
 
         return crashed

@@ -4,11 +4,14 @@
 
 from setuptools import setup
 
-PACKAGE_VERSION = '0.3'
+PACKAGE_NAME = 'mozb2g'
+PACKAGE_VERSION = '0.4'
 
-deps = ['mozdevice >= 0.16', 'marionette_client >= 0.5.2']
+deps = ['mozdevice >= 0.16',
+        'marionette_client >= 0.5.2',
+        'mozfile >= 1.0']
 
-setup(name='mozb2g',
+setup(name=PACKAGE_NAME,
       version=PACKAGE_VERSION,
       description="B2G specific code for device automation",
       long_description="see http://mozbase.readthedocs.org/",

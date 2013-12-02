@@ -11,10 +11,10 @@ try:
 except IOError:
     description = None
 
-PACKAGE_VERSION = '1.8'
+PACKAGE_VERSION = '1.9'
 
 deps = ['mozinfo >= 0.7',
-        'mozfile'
+        'mozfile >= 1.0'
        ]
 
 setup(name='mozInstall',

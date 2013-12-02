@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
-import mozfile
-import mozinfo
 import os
 import shutil
 import tempfile
 import unittest
+
+import mozfile
+import mozinfo
+
 import stubs
 
 
@@ -17,17 +19,12 @@ class TestRemoveTree(unittest.TestCase):
         self.tempdir = stubs.create_stub()
 
     def tearDown(self):
-        # Cleanup the stub if it sill exists
         if os.path.isdir(self.tempdir):
-            mozfile.rmtree(self.tempdir)
+            shutil.rmtree(self.tempdir)
 
     def test_remove_directory(self):
         self.assertTrue(os.path.isdir(self.tempdir))
-        try:
-            mozfile.rmtree(self.tempdir)
-        except:
-            shutil.rmtree(self.tempdir)
-            raise
+        mozfile.remove(self.tempdir)
         self.assertFalse(os.path.exists(self.tempdir))
 
     def test_remove_directory_with_open_file(self):
@@ -37,13 +34,15 @@ class TestRemoveTree(unittest.TestCase):
         filepath = os.path.join(self.tempdir, *stubs.files[1])
         f = file(filepath, 'w')
         f.write('foo-bar')
+
         # keep file open and then try removing the dir-tree
         if mozinfo.isWin:
             # On the Windows family WindowsError should be raised.
-            self.assertRaises(WindowsError, mozfile.rmtree, self.tempdir)
+            self.assertRaises(WindowsError, mozfile.remove, self.tempdir)
+            self.assertTrue(os.path.exists(self.tempdir))
         else:
             # Folder should be deleted on all other platforms
-            mozfile.rmtree(self.tempdir)
+            mozfile.remove(self.tempdir)
             self.assertFalse(os.path.exists(self.tempdir))
 
     def test_remove_directory_after_closing_file(self):
@@ -53,7 +52,9 @@ class TestRemoveTree(unittest.TestCase):
         filepath = os.path.join(self.tempdir, *stubs.files[1])
         with open(filepath, 'w') as f:
             f.write('foo-bar')
+
         # Delete directory tree
-        mozfile.rmtree(self.tempdir)
+        mozfile.remove(self.tempdir)
+
         # Check deletion is successful
         self.assertFalse(os.path.exists(self.tempdir))

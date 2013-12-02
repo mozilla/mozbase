@@ -15,10 +15,10 @@ import types
 import uuid
 
 from addons import AddonManager
-from mozfile import tree
+import mozfile
 from permissions import Permissions
 from prefs import Preferences
-from shutil import copytree, rmtree
+from shutil import copytree
 from webapps import WebappCollection
 
 
@@ -126,8 +126,7 @@ class Profile(object):
 
             # If it's a temporary profile we have to remove it
             if self.create_new:
-                if os.path.exists(self.profile):
-                    rmtree(self.profile, onerror=self._cleanup_error)
+                mozfile.remove(self.profile)
 
     def reset(self):
         """
@@ -136,33 +135,6 @@ class Profile(object):
         self.cleanup()
 
         self._internal_init()
-
-    def _cleanup_error(self, function, path, excinfo):
-        """ Specifically for windows we need to handle the case where the windows
-            process has not yet relinquished handles on files, so we do a wait/try
-            construct and timeout if we can't get a clear road to deletion
-        """
-
-        try:
-            from exceptions import WindowsError
-            from time import sleep
-            def is_file_locked():
-                return excinfo[0] is WindowsError and excinfo[1].winerror == 32
-
-            if excinfo[0] is WindowsError and excinfo[1].winerror == 32:
-                # Then we're on windows, wait to see if the file gets unlocked
-                # we wait 10s
-                count = 0
-                while count < 10:
-                    sleep(1)
-                    try:
-                        function(path)
-                        break
-                    except:
-                        count += 1
-        except ImportError:
-            # We can't re-raise an error, so we'll hope the stuff above us will throw
-            pass
 
     def clean_preferences(self):
         """Removed preferences added by mozrunner."""
@@ -182,7 +154,7 @@ class Profile(object):
         """
         if not path_to:
             tempdir = tempfile.mkdtemp() # need an unused temp dir name
-            rmtree(tempdir) # copytree requires that dest does not exist
+            mozfile.remove(tempdir) # copytree requires that dest does not exist
             path_to = tempdir
         copytree(path_from, path_to)
 
@@ -191,7 +163,7 @@ class Profile(object):
             def wrapped(self):
                 fn(self)
                 if self.restore and os.path.exists(self.profile):
-                        rmtree(self.profile, onerror=self._cleanup_error)
+                    mozfile.remove(self.profile)
             return wrapped
 
         c = cls(path_to, **kwargs)
@@ -275,7 +247,7 @@ class Profile(object):
         parts = [('Path', self.profile)] # profile path
 
         # directory tree
-        parts.append(('Files', '\n%s' % tree(self.profile)))
+        parts.append(('Files', '\n%s' % mozfile.tree(self.profile)))
 
         # preferences
         for prefs_file in ('user.js', 'prefs.js'):
