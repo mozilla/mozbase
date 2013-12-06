@@ -16,6 +16,13 @@ class Bug758250(unittest.TestCase):
     https://bugzilla.mozilla.org/show_bug.cgi?id=758250
     """
 
+    def setUp(self):
+        self.tmpdir = tempfile.mktemp()
+
+    def tearDown(self):
+        # remove vestiges
+        shutil.rmtree(self.tmpdir)
+
     def test_profile_addon_cleanup(self):
 
         # sanity check: the empty addon should be here
@@ -25,24 +32,21 @@ class Bug758250(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(empty, 'install.rdf')))
 
         # because we are testing data loss, let's make sure we make a copy
-        tmpdir = tempfile.mktemp()
-        shutil.copytree(empty, tmpdir)
-        self.assertTrue(os.path.exists(os.path.join(tmpdir, 'install.rdf')))
+        shutil.copytree(empty, self.tmpdir)
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'install.rdf')))
 
         # make a starter profile
         profile = mozprofile.FirefoxProfile()
         path = profile.profile
 
         # make a new profile based on the old
-        newprofile = mozprofile.FirefoxProfile(profile=path, addons=[tmpdir])
+        newprofile = mozprofile.FirefoxProfile(profile=path, addons=[self.tmpdir])
         newprofile.cleanup()
 
         # the source addon *should* still exist
-        self.assertTrue(os.path.exists(tmpdir))
-        self.assertTrue(os.path.exists(os.path.join(tmpdir, 'install.rdf')))
+        self.assertTrue(os.path.exists(self.tmpdir))
+        self.assertTrue(os.path.exists(os.path.join(self.tmpdir, 'install.rdf')))
 
-        # remove vestiges
-        shutil.rmtree(tmpdir)
 
 if __name__ == '__main__':
     unittest.main()

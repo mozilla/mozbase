@@ -79,7 +79,7 @@ class AddonManager(object):
 
         # Remove all downloaded add-ons
         for addon in self.downloaded_addons:
-            os.remove(addon)
+            mozfile.remove(addon)
 
         # restore backups
         if self.backup_dir and os.path.isdir(self.backup_dir):
@@ -90,7 +90,7 @@ class AddonManager(object):
                 shutil.move(backup_path, extensions_path)
 
             if not os.listdir(self.backup_dir):
-                shutil.rmtree(self.backup_dir, ignore_errors=True)
+                mozfile.remove(self.backup_dir)
 
         # reset instance variables to defaults
         self._internal_init()
@@ -110,7 +110,7 @@ class AddonManager(object):
         os.close(fd)
 
         if not self.is_addon(path):
-            os.remove(path)
+            mozfile.remove(path)
             raise AddonFormatError('Not a valid add-on: %s' % url)
 
         # Give the downloaded file a better name by using the add-on id
@@ -374,7 +374,7 @@ class AddonManager(object):
 
             # if we had to extract the addon, remove the temporary directory
             if orig_path:
-                mozfile.rmtree(addon)
+                mozfile.remove(addon)
                 addon = orig_path
 
             self._addons.append(addon_id)
@@ -386,7 +386,4 @@ class AddonManager(object):
         :param addon_id: id of the add-on to be removed
         """
         path = self.get_addon_path(addon_id)
-        if os.path.isdir(path):
-            mozfile.rmtree(path)
-        elif os.path.isfile(path):
-            os.remove(path)
+        mozfile.remove(path)

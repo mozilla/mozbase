@@ -6,8 +6,6 @@
 applications across platforms.
 
 """
-import mozinfo
-import mozfile
 from optparse import OptionParser
 import os
 import shutil
@@ -16,6 +14,9 @@ import sys
 import tarfile
 import time
 import zipfile
+
+import mozfile
+import mozinfo
 
 if mozinfo.isMac:
     from plistlib import readPlist
@@ -83,7 +84,7 @@ def get_binary(path, app_name):
     if not binary:
         # The expected binary has not been found. Make sure we clean the
         # install folder to remove any traces
-        shutil.rmtree(path)
+        mozfile.remove(path)
 
         raise InvalidBinary('"%s" does not contain a valid binary.' % path)
 
@@ -206,7 +207,7 @@ def uninstall(install_folder):
 
     # Ensure that we remove any trace of the installation. Even the uninstaller
     # on Windows leaves files behind we have to explicitely remove.
-    mozfile.rmtree(install_folder)
+    mozfile.remove(install_folder)
 
 
 def _install_dmg(src, dest):

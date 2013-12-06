@@ -13,6 +13,8 @@ import subprocess
 
 from marionette import Marionette
 from mozdevice import DeviceManagerADB, DeviceManagerSUT, DMError
+import mozfile
+
 
 class B2GMixin(object):
     profileDir = None
@@ -21,7 +23,7 @@ class B2GMixin(object):
 
     def __init__(self, host=None, marionetteHost=None, marionettePort=2828,
                  **kwargs):
- 
+
         # (allowing marionneteHost to be specified seems a bit
         # counter-intuitive since we normally get it below from the ip
         # address, however we currently need it to be able to connect
@@ -111,8 +113,7 @@ class B2GMixin(object):
         if not self.profileDir:
             self.profileDir = tempfile.mkdtemp()
         our_userJS = os.path.join(self.profileDir, "user.js")
-        if os.path.exists(our_userJS):
-            os.remove(our_userJS)
+        mozfile.remove(our_userJS)
         #copy profile
         try:
             self.getFile(self.userJS, our_userJS)
@@ -163,7 +164,7 @@ class B2GMixin(object):
         our_userJS = os.path.join(self.profileDir, "user.js")
         if os.path.exists(our_userJS):
             self.shellCheckOutput(['dd', 'if=%s.orig' % self.userJS, 'of=%s' % self.userJS])
-        shutil.rmtree(self.profileDir)
+        mozfile.remove(self.profileDir)
         self.profileDir = None
 
     def getAppInfo(self):

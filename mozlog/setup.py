@@ -4,7 +4,7 @@
 
 from setuptools import setup
 
-PACKAGE_NAME = "mozlog"
+PACKAGE_NAME = 'mozlog'
 PACKAGE_VERSION = '1.4'
 
 setup(name=PACKAGE_NAME,
