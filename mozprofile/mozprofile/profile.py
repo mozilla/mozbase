@@ -367,6 +367,8 @@ class MetroFirefoxProfile(Profile):
                    # see: https://developer.mozilla.org/en/Installing_extensions
                    'extensions.enabledScopes' : 5,
                    'extensions.autoDisableScopes' : 10,
+                   # Enable extensions
+                   'extensions.defaultProviders.enabled' : True,
                    # Don't install distribution add-ons from the app folder
                    'extensions.installDistroAddons' : False,
                    # Dont' run the add-on compatibility check during start-up
