@@ -323,8 +323,12 @@ class TestAddonsManager(unittest.TestCase):
                           self.am.addon_details, invalid_addon)
 
         # Check invalid path
-        self.assertRaises(mozprofile.addons.AddonFormatError,
+        self.assertRaises(IOError,
                           self.am.addon_details, '')
+
+        # Check invalid add-on format
+        self.assertRaises(mozprofile.addons.AddonFormatError,
+                          self.am.addon_details, os.path.join(os.path.join(here, 'files'), 'not_an_addon.txt'))
 
     @unittest.skip("Bug 900154")
     def test_clean_addons(self):

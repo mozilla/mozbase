@@ -262,6 +262,9 @@ class AddonManager(object):
                     rc.append(node.data)
             return ''.join(rc).strip()
 
+        if not os.path.exists(addon_path):
+            raise IOError('Add-on path does not exist: %s' % addon_path)
+
         try:
             if zipfile.is_zipfile(addon_path):
                 # Bug 944361 - We cannot use 'with' together with zipFile because
@@ -271,9 +274,11 @@ class AddonManager(object):
                     manifest = compressed_file.read('install.rdf')
                 finally:
                     compressed_file.close()
-            else:
+            elif os.path.isdir(addon_path):
                 with open(os.path.join(addon_path, 'install.rdf'), 'r') as f:
                     manifest = f.read()
+            else:
+                raise IOError('Add-on neither a zip file nor a directory')
         except (IOError, KeyError), e:
             raise AddonFormatError, str(e), sys.exc_info()[2]
 
