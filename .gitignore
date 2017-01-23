@@ -1,0 +1,15 @@
+*.pyc
+*.pyo
+*.egg-info
+*.swp
+build
+dist
+*~
+#*
+.DS_Store
+*.exe
+*.o
+*.a
+*.so.0
+proclaunch
+.idea
